@@ -4,48 +4,41 @@ let stage;
 
 function init() {
 	stage = new createjs.Stage("myCanvas");
+	let scene = 0;
 	let player = [];
 
 	// バックグラウンド
-	let background = new createjs.Bitmap('Background.jpg');
-	stage.addChild(background);
-
-	// Player0の初期化
-	player[0] = new Player(1, 320, 350, "DarkRed");
-	player[0].line.graphics.drawRect(19, 19, 402, 42);
-	player[0].gauge.graphics.drawRect(20, 20, 400, 40);
-	stage.addChild(player[0].player);
-	stage.addChild(player[0].line);
-	stage.addChild(player[0].gauge);
-
-	// Player1の初期化
-	player[1] = new Player(-1, 640, 350, "DarkBlue");
-	player[1].line.graphics.drawRect(539, 19, 402, 42);
-	player[1].gauge.graphics.drawRect(540, 20, 400, 40);
-	stage.addChild(player[1].player);
-	stage.addChild(player[1].line);
-	stage.addChild(player[1].gauge);
+	let stageList = ["Arena", "Azure", "Helipad", "Italy", "Plane"];
+	let place;
+	let background;
 
 	// サークル
 	let circle = new createjs.Shape();
 	circle.graphics.beginStroke("black").setStrokeStyle(2);
 	circle.graphics.beginFill("white").drawCircle(480, 43, 40);
-	stage.addChild(circle);
 
 	// カウント
 	let count = 0;
-	let countText = new createjs.Text(60, "45px serif", "black");
+	let countText = new createjs.Text("", "45px serif", "black");
 	countText.x = 480;
 	countText.y = 15;
 	countText.textAlign = "center";
-	stage.addChild(countText);
 
 	// メッセージ
-	let message = new createjs.Text("", "100px serif", "black");
-	message.x = 480;
-	message.y = 120;
-	message.textAlign = "center";
-	stage.addChild(message);
+	let frameText = new createjs.Text("", "100px serif", "black");
+	frameText.x = 483;
+	frameText.y = 118;
+	frameText.textAlign = "center";
+
+	let insideText = frameText.clone();
+	insideText.color = "red";
+	insideText.x = 480;
+	insideText.y = 120;
+
+	// 勝利数 + ラウンド
+	let redWin = 0;
+	let blueWin = 0;
+	let round = 3;
 
 	// サウンド
 	createjs.Sound.registerSound("sound/setup.mp3", "setup");
@@ -56,9 +49,9 @@ function init() {
 	createjs.Sound.registerSound("sound/landing.mp3", "landing");
 	createjs.Sound.registerSound("sound/end.mp3", "end");
 	createjs.Sound.registerSound("sound/hit.mp3", "hit");
-	createjs.Sound.registerSound("sound/BGM.mp3", "BGM");
+	createjs.Sound.volume = 0.2;
 
-	let onBGM = false;
+	initialize();
 
 	window.addEventListener("keydown", handleKeydown);
 	window.addEventListener("keyup", handleKeyUp);
@@ -68,10 +61,7 @@ function init() {
 		let keyCode = event.keyCode;
 		player[0].handleKeydown(keyCode, 65, 68, 87, 83, 71);
 		player[1].handleKeydown(keyCode, 37, 39, 38, 40, 110);
-		if(keyCode === 32 && !onBGM) {
-			createjs.Sound.play("BGM");
-			onBGM = true;
-		}
+		if(keyCode === 32 && scene === 0) start();
 	}
 
 	// キーアップ
@@ -86,6 +76,9 @@ function init() {
 
 	// アニメーション
 	function handleTick() {
+		if(scene === 0) { stage.update(); return; }
+		if(scene === -1) { pause(); return; }
+
 		for(let i = 0; i < player.length; i++) {
 			// パンチ
 			if(player[i].isPunch) player[i].punch(player[i^1]);
@@ -94,7 +87,7 @@ function init() {
 			// ジャンプ
 			else if(player[i].isJump) player[i].jump();
 			// しゃがみ
-			else if(player[i].isDown) player[i].squat();
+			else if(player[i].isSquat) player[i].squat();
 			// 移動
 			if(player[i].isLeft) player[i].left(player[i^1]);
 			else if(player[i].isRight) player[i].right(player[i^1]);
@@ -102,7 +95,6 @@ function init() {
 			player[i].guardCheck();
 			if(player[i].player.x < 40) player[i].player.x = 40;
 			if(player[i].player.x > 920) player[i].player.x = 920;
-			if(player[i].HP <= 0) player[i].dead(message);
 			// レイジドライブ
 			player[i].upperRageDrive(player[i^1]);
 			player[i].lowerRageDrive(player[i^1]);
@@ -111,17 +103,150 @@ function init() {
 		// カウント
 		count++;
 		countText.text = Math.ceil(60 - count/60);
-		if(count/60 >= 61) {
-			if(player[0].HP === player[1].HP) message.text = "DRAW";
-			else if(player[0].HP > player[1].HP) message.text = "RED WINS!!";
-			else if(player[1].HP > player[0].HP) message.text = "BLUE WINS!!";
-			countText.text = 0;
-			createjs.Sound.play("end");
-			createjs.Ticker.removeAllEventListeners();
-			stage.removeAllEventListeners();
-		}
+		if(count >= 60) frameText.text = insideText.text = "";
+		if(count >= 61*60) timeup(player[0], player[1]);
+
+		deadCheck(player[0], player[1]);
 
 		stage.update();
+	}
+
+	// 初期化
+	function initialize() {
+		player = [];
+
+		// バックグラウンド + BGM
+		place = stageList[Math.floor(Math.random() * stageList.length)];
+		background = new createjs.Bitmap("image/" + place + ".jpg");
+		createjs.Sound.registerSound("BGM/" + place + ".mp3", place);
+
+		// レッドマンの初期化
+		player[0] = new Player(1, 320, 350, "#ff0060");
+		player[0].line.graphics.drawRect(19, 19, 402, 42);
+		player[0].gauge.graphics.drawRect(20, 20, 400, 40);
+
+		// ブルーマンの初期化
+		player[1] = new Player(-1, 640, 350, "#00afff");
+		player[1].line.graphics.drawRect(539, 19, 402, 42);
+		player[1].gauge.graphics.drawRect(540, 20, 400, 40);
+
+		// カウント
+		count = 0;
+		countText.text = 60;
+		frameText.text = insideText.text = "READY";
+
+		// ステージ
+		stage.addChild(background);
+		stage.addChild(player[0].player);
+		stage.addChild(player[1].player);
+		stage.addChild(player[0].line);
+		stage.addChild(player[1].line);
+		stage.addChild(player[0].gauge);
+		stage.addChild(player[1].gauge);
+		stage.addChild(circle);
+		stage.addChild(countText);
+		stage.addChild(frameText);
+		stage.addChild(insideText);
+
+		drawWinMark();
+
+		// リザルト
+		if(redWin === 3 && blueWin === 3) {
+			frameText.text = insideText.text = "DRAW";
+		}
+		else if(redWin === 3) {
+			frameText.text = insideText.text = "RED WINS";
+		}
+		else if(blueWin === 3) {
+			frameText.text = insideText.text = "BLUE WINS";
+		}
+		else return;
+
+		// 終了
+		stage.update();
+		createjs.Ticker.removeAllEventListeners();
+		stage.removeAllEventListeners();
+	}
+
+	// スタート
+	function start() {
+		createjs.Sound.play(place);
+		frameText.text = insideText.text = "FIGHT";
+		scene = 1;
+	}
+
+	// ポーズ
+	function pause() {
+		count++;
+		if(count >= 60*2) {
+			createjs.Sound.stop(place);
+			scene = 0;
+			initialize();
+		}
+	}
+
+	// デッドチェック
+	function deadCheck(red, blue) {
+		if(red.HP <= 0 && blue.HP <= 0) {
+			redWin++; blueWin++;
+			frameText.text = insideText.text = "DOUBLE K.O.";
+		}
+		else if(red.HP <= 0) {
+			blueWin++;
+			frameText.text = insideText.text = "K.O.";
+		}
+		else if(blue.HP <= 0) {
+			redWin++;
+			frameText.text = insideText.text = "K.O.";
+		}
+		else return;
+		createjs.Sound.play("ko");
+		count = 0;
+		scene = -1;
+	}
+
+	// タイムアップ
+	function timeup(red, blue) {
+		if(red.HP === blue.HP) {
+			redWin++; blueWin++;
+			frameText.text = insideText.text = "TIME UP";
+		}
+		else if(red.HP > blue.HP) {
+			redWin++;
+			frameText.text = insideText.text = "TIME UP";
+		}
+		else if(blue.HP > red.HP) {
+			blueWin++;
+			frameText.text = insideText.text = "TIME UP";
+		}
+		countText.text = 0;
+		createjs.Sound.play("end");
+		count = 0;
+		scene = -1;
+	}
+
+	// 勝利数表示
+	function drawWinMark() {
+		let redCircle = [];
+		let blueCircle = [];
+		for(let i = 0; i < round; i++) {
+			let initial = new createjs.Shape();
+			initial.graphics.beginStroke("black").setStrokeStyle(1);
+			initial.graphics.beginFill("gray").drawCircle(0, 0, 10);
+			let win = new createjs.Shape();
+			win.graphics.beginStroke("black").setStrokeStyle(1);
+			win.graphics.beginFill("#00bbff").drawCircle(0, 0, 10);
+			if(i < redWin) redCircle[i] = win.clone();
+			else redCircle[i] = initial.clone();
+			redCircle[i].x = 410 - i * 30;
+			redCircle[i].y = 80;
+			if(i < blueWin) blueCircle[i] = win.clone();
+			else blueCircle[i] = initial.clone();
+			blueCircle[i].x = 550 + i * 30;
+			blueCircle[i].y = 80;
+			stage.addChild(redCircle[i]);
+			stage.addChild(blueCircle[i]);
+		}
 	}
 }
 
@@ -137,7 +262,7 @@ class Player {
 		this.isLeft = false;
 		this.isRight = false;
 		this.isJump = false;
-		this.isDown = false;
+		this.isSquat = false;
 		this.isPunch = false;
 		this.isLowKick = false;
 		this.isGuard = true;
@@ -157,11 +282,12 @@ class Player {
 
 	// リセット
 	reset(target) {
-		if(!target.isDown) {
+		if(!target.isSquat) {
 			stage.removeChild(target.player);
 			target.player = target.initialMode(target.player.x, target.player.y);
 			stage.addChild(target.player);
 		}
+		stage.removeChild(target.star);
 		target.punchTime = 0;
 		target.lowKickTime = 0;
 		target.waitTime = 0;
@@ -169,19 +295,10 @@ class Player {
 		target.isPunch = false;
 	}
 
-	// 死亡
-	dead(message) {
-		if(this.id === 1) message.text = "BLUE WINS!!";
-		else if(this.id === -1) message.text = "RED WINS!!";
-		createjs.Sound.play("ko");
-		createjs.Ticker.removeAllEventListeners();
-		stage.removeAllEventListeners();
-	}
-
 	// ガードチェック
 	guardCheck() {
 		this.isGuard = false;
-		if(!this.isJump && !this.isDown && !this.isPunch && !this.isLowKick) {
+		if(!this.isJump && !this.isSquat && !this.isPunch && !this.isLowKick) {
 			if(this.id === 1 && !this.isRight) this.isGuard = true;
 			else if(this.id === -1 && !this.isLeft) this.isGuard = true;
 		}
@@ -197,7 +314,7 @@ class Player {
 
 	// 右移動
 	right(target) {
-		if(this.isPunch || this.isLowKick || this.isDown) return;
+		if(this.isPunch || this.isLowKick || this.isSquat) return;
 		if(this.id === 1 && this.player.x + 80 < target.player.x)
 			this.player.x += 5;
 		else if(this.id === -1)
@@ -206,7 +323,7 @@ class Player {
 
 	// 左移動
 	left(target) {
-		if(this.isPunch || this.isLowKick || this.isDown) return;
+		if(this.isPunch || this.isLowKick || this.isSquat) return;
 		if(this.id === 1)
 			this.player.x -= 3;
 		else if(this.id === -1 && this.player.x - 80 > target.player.x)
@@ -216,6 +333,7 @@ class Player {
 	// ジャンプ
 	jump() {
 		if(this.jumpTime === 0) createjs.Sound.play("jump");
+		if(this.jumpTime !== 0 && this.isSquat) this.isSquat = false;
 		this.jumpTime++;
 		this.player.y += (this.jumpTime - 15) * 2;
 		if(this.jumpTime > 28) {
@@ -264,7 +382,7 @@ class Player {
 						(this.player.x + this.id * i, this.player.y + 120);
 					if(target.player.hitTest(point.x, point.y)) {
 						target.player.x += this.id * 50;
-						if(!target.isDown || target.isLowKick) {
+						if(!target.isSquat || target.isLowKick) {
 							target.HP -= 25 + (10 * (this.HP <= 75));
 							this.updateGauge(target);
 							this.reset(target);
@@ -286,7 +404,7 @@ class Player {
 	punch(target) {
 		// 入力時
 		if(this.waitTime === 0 && this.punchTime === 0) {
-			if(this.isDown || this.isLowKick) {
+			if(this.isSquat || this.isLowKick) {
 				this.isLowKick = true;
 				return;
 			}
@@ -300,7 +418,7 @@ class Player {
 		else if(this.waitTime !== 0) {
 			if(this.HP <= 75 && this.rageDrive === "Unused") {
 				if(this.isJump && this.jumpTime === 0) this.rageDrive = "Upper";
-				else if(this.isDown) this.rageDrive = "Lower";
+				else if(this.isSquat) this.rageDrive = "Lower";
 			}
 			this.waitTime++;
 			if(this.waitTime >= 20) {
@@ -354,7 +472,6 @@ class Player {
 			if(this.punchTime >= 20) {
 				if(this.rageDrive === "Upper" || this.rageDrive === "Lower")
 					this.rageDrive = "Used";
-				else stage.removeChild(this.star);
 				this.reset(this);
 			}
 		}
@@ -365,10 +482,7 @@ class Player {
 	// 上段レイジドライブ
 	upperRageDrive(target = null) {
 		if(target === null) {
-			let bullet = new createjs.Shape();
-			bullet.graphics.beginFill("black").drawCircle(0, 0, 8);
-			bullet.x = this.player.x;
-			bullet.y = this.player.y - 40 + Math.random() * 100;
+			let bullet = this.makeBullet(this.player.x, this.player.y, -40);
 			this.upperBullet.push(bullet);
 			stage.addChild(bullet);
 		}
@@ -393,10 +507,7 @@ class Player {
 	// 下段レイジドライブ
 	lowerRageDrive(target = null) {
 		if(target === null) {
-			let bullet = new createjs.Shape();
-			bullet.graphics.beginFill("black").drawCircle(0, 0, 8);
-			bullet.x = this.player.x;
-			bullet.y = this.player.y + 50 + Math.random() * 100;
+			let bullet = this.makeBullet(this.player.x, this.player.y, 50);
 			this.lowerBullet.push(bullet);
 			stage.addChild(bullet);
 		}
@@ -406,7 +517,7 @@ class Player {
 				let point = target.player.globalToLocal
 					(this.lowerBullet[i].x, this.lowerBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
-					if(!target.isDown || target.isLowKick) {
+					if(!target.isSquat || target.isLowKick) {
 						target.HP -= 10;
 						this.updateGauge(target);
 					}
@@ -418,12 +529,23 @@ class Player {
 		}
 	}
 
+	// 弾生成
+	makeBullet(x, y, basis) {
+		let bullet = new createjs.Shape();
+		bullet.graphics.beginFill(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
+		bullet.graphics.beginStroke("black").setStrokeStyle(0.5);
+		bullet.graphics.drawPolyStar(0, 0, 15, 8, 0.6, -90);
+		bullet.x = x;
+		bullet.y = y + basis + Math.random() * 100;
+		return bullet;
+	}
+
 	// キーダウン
 	handleKeydown(keyCode, left, right, jump, down, punch) {
 		if(keyCode === left) this.isLeft = true;
 		else if(keyCode === right) this.isRight = true;
-		else if(keyCode === jump && !this.isDown) this.isJump = true;
-		else if(keyCode === down) this.isDown = true;
+		else if(keyCode === jump && !this.isSquat) this.isJump = true;
+		else if(keyCode === down) this.isSquat = true;
 		else if(keyCode === punch) this.isPunch = true;
 	}
 
@@ -432,7 +554,7 @@ class Player {
 		if(keyCode === left) this.isLeft = false;
 		else if(keyCode === right) this.isRight = false;
 		else if(keyCode === down) {
-			this.isDown = false;
+			this.isSquat = false;
 			if(this.lowKickTime === 0) {
 				stage.removeChild(this.player);
 				this.player = this.initialMode(this.player.x, this.player.y);
@@ -450,14 +572,23 @@ class Player {
 		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
 		let line = new createjs.Shape();
 		line.graphics.beginFill(this.color);
-		line.graphics.beginStroke(this.color).setStrokeStyle(15);
-		line.graphics.moveTo(0, 0).lineTo(0, 100);
-		line.graphics.moveTo(0, 100).lineTo(-20, 150);
-		line.graphics.moveTo(0, 100).lineTo(20, 150);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(-30, 80);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(30, 80);
+		// 胴体
+		line.graphics.beginStroke(this.color).setStrokeStyle(30);
+		line.graphics.moveTo(0, 0).lineTo(0, 110);
+		// 両足
+		line.graphics.setStrokeStyle(10);
+		line.graphics.moveTo(0, 110).lineTo(-40, 110);
+		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
+		line.graphics.moveTo(0, 110).lineTo(40, 110);
+		line.graphics.moveTo(35, 110).lineTo(35, 150);
+		// 両手
+		line.graphics.moveTo(0, 60).lineTo(55, 60);
+		line.graphics.moveTo(50, 60).lineTo(50, 60 - this.id * 30);
+		line.graphics.moveTo(0, 60).lineTo(-55, 60);
+		line.graphics.moveTo(-50, 60).lineTo(-50, 60 - this.id * 30);
 		player.addChild(face);
 		player.addChild(line);
+		// player.setTransform(0, 0, 1, 1);
 		return player;
 	}
 
@@ -470,12 +601,18 @@ class Player {
 		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
 		let line = new createjs.Shape();
 		line.graphics.beginFill(this.color);
-		line.graphics.beginStroke(this.color).setStrokeStyle(15);
-		line.graphics.moveTo(0, 0).lineTo(0, 100);
-		line.graphics.moveTo(0, 100).lineTo(-20, 150);
-		line.graphics.moveTo(0, 100).lineTo(20, 150);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(-50, 40);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(50, 40);
+		// 胴体
+		line.graphics.beginStroke(this.color).setStrokeStyle(30);
+		line.graphics.moveTo(0, 0).lineTo(0, 110);
+		// 両足
+		line.graphics.setStrokeStyle(10);
+		line.graphics.moveTo(0, 110).lineTo(-40, 110);
+		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
+		line.graphics.moveTo(0, 110).lineTo(40, 110);
+		line.graphics.moveTo(35, 110).lineTo(35, 150);
+		// 両手
+		line.graphics.moveTo(0, 60).lineTo(-60, 40);
+		line.graphics.moveTo(0, 60).lineTo(60, 40);
 		player.addChild(face);
 		player.addChild(line);
 		return player;
@@ -490,12 +627,18 @@ class Player {
 		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
 		let line = new createjs.Shape();
 		line.graphics.beginFill(this.color);
-		line.graphics.beginStroke(this.color).setStrokeStyle(15);
-		line.graphics.moveTo(0, 0).lineTo(0, 100);
-		line.graphics.moveTo(0, 100).lineTo(-20, 150);
-		line.graphics.moveTo(0, 100).lineTo(20, 150);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(this.id * 50, 60);
-		line.graphics.setStrokeStyle(10).moveTo(0, 50).lineTo(this.id * 50, 40);
+		// 胴体
+		line.graphics.beginStroke(this.color).setStrokeStyle(30);
+		line.graphics.moveTo(0, 0).lineTo(0, 110);
+		// 両足
+		line.graphics.setStrokeStyle(10);
+		line.graphics.moveTo(0, 110).lineTo(-40, 110);
+		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
+		line.graphics.moveTo(0, 110).lineTo(40, 110);
+		line.graphics.moveTo(35, 110).lineTo(35, 150);
+		// 両手
+		line.graphics.moveTo(0, 60).lineTo(this.id * 50, 75);
+		line.graphics.moveTo(0, 60).lineTo(this.id * 50, 45);
 		player.addChild(face);
 		player.addChild(line);
 		return player;
@@ -519,13 +662,18 @@ class Player {
 		face.graphics.beginFill(this.color).drawCircle(0, 40, 40);
 		let line = new createjs.Shape();
 		line.graphics.beginFill(this.color);
-		line.graphics.beginStroke(this.color).setStrokeStyle(15);
+		// 胴体
+		line.graphics.beginStroke(this.color).setStrokeStyle(30);
 		line.graphics.moveTo(0, 40).lineTo(0, 150);
+		// 両足
+		line.graphics.setStrokeStyle(15);
 		line.graphics.moveTo(0, 142.5).lineTo(this.id * -40, 142.5);
 		line.graphics.moveTo(0, 120).lineTo(this.id * 50, 120);
 		line.graphics.moveTo(this.id * 42.5, 120).lineTo(this.id * 42.5, 150);
-		line.graphics.setStrokeStyle(10).moveTo(0, 90).lineTo(this.id * 50, 90);
-		line.graphics.setStrokeStyle(10).moveTo(0, 90).lineTo(this.id * -40, 120);
+		// 両手
+		line.graphics.setStrokeStyle(10);
+		line.graphics.moveTo(0, 90).lineTo(this.id * 50, 90);
+		line.graphics.moveTo(0, 90).lineTo(this.id * -40, 120);
 		player.addChild(face);
 		player.addChild(line);
 		return player;
@@ -540,14 +688,19 @@ class Player {
 		face.graphics.beginFill(this.color).drawCircle(0, 40, 40);
 		let line = new createjs.Shape();
 		line.graphics.beginFill(this.color);
-		line.graphics.beginStroke(this.color).setStrokeStyle(15);
+		// 胴体
+		line.graphics.beginStroke(this.color).setStrokeStyle(30);
 		line.graphics.moveTo(0, 40).lineTo(0, 150);
+		// 両足
+		line.graphics.setStrokeStyle(15);
 		line.graphics.moveTo(0, 142.5).lineTo(this.id * -40, 142.5);
 		line.graphics.moveTo(0, 120).lineTo(this.id * 70, 120);
 		line.graphics.setStrokeStyle(1).moveTo(this.id * 70, 100)
 			.lineTo(this.id * 70, 140).lineTo(this.id * 120, 120);
-		line.graphics.setStrokeStyle(10).moveTo(0, 90).lineTo(this.id * 50, 90);
-		line.graphics.setStrokeStyle(10).moveTo(0, 90).lineTo(this.id * -40, 120);
+		// 両手
+		line.graphics.setStrokeStyle(10);
+		line.graphics.moveTo(0, 90).lineTo(this.id * 50, 90);
+		line.graphics.moveTo(0, 90).lineTo(this.id * -40, 120);
 		player.addChild(face);
 		player.addChild(line);
 		return player;
