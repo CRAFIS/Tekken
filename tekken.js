@@ -15,24 +15,21 @@ function init() {
 	// キャラクター
 	let character = ["Chloe", "Alisa", "Xiaoyu"];
 
-	// サークル
-	let circle = new createjs.Shape();
-	circle.graphics.beginStroke("black").setStrokeStyle(2);
-	circle.graphics.beginFill("white").drawCircle(480, 43, 40);
-
 	// カウント
 	let count = 0;
 	let countText = new createjs.Text("", "45px serif", "black");
 	countText.x = 480;
 	countText.y = 15;
 	countText.textAlign = "center";
+	let circle = new createjs.Shape();
+	circle.graphics.beginStroke("black").setStrokeStyle(2);
+	circle.graphics.beginFill("white").drawCircle(480, 43, 40);
 
 	// メッセージ
 	let frameText = new createjs.Text("", "100px serif", "black");
 	frameText.x = 483;
 	frameText.y = 118;
 	frameText.textAlign = "center";
-
 	let insideText = frameText.clone();
 	insideText.color = "red";
 	insideText.x = 480;
@@ -42,6 +39,19 @@ function init() {
 	let redWin = 0;
 	let blueWin = 0;
 	let round = 3;
+
+	// CPUモード
+	let CPU = false;
+	let CPUText = new createjs.Text("CPU MODE: OFF", "30px serif", "black");
+	CPUText.x = 700;
+	CPUText.y = 500;
+	let CPUButton = new createjs.Shape();
+	CPUButton.graphics.beginStroke("black").setStrokeStyle(2);
+	CPUButton.graphics.beginFill("white").drawRect(695, 500, 262, 37);
+	CPUButton.addEventListener("click", function (){
+		if(CPU) { CPU = false; CPUText.text = "CPU MODE: OFF"; }
+		else { CPU = true; CPUText.text = "CPU MODE: ON"; }
+	});
 
 	// サウンド
 	createjs.Sound.registerSound("sound/setup.mp3", "setup");
@@ -55,6 +65,8 @@ function init() {
 	createjs.Sound.volume = 0.2;
 
 	initialize();
+	stage.addChild(CPUButton);
+	stage.addChild(CPUText);
 
 	window.addEventListener("keydown", handleKeydown);
 	window.addEventListener("keyup", handleKeyUp);
@@ -79,8 +91,12 @@ function init() {
 
 	// アニメーション
 	function handleTick() {
+		// シーン分岐
 		if(scene === 0 || scene === 3) { stage.update(); return; }
 		if(scene === 2) { pause(); return; }
+
+		// CPUモード
+		if(CPU) player[1].randomAction();
 
 		for(let i = 0; i < player.length; i++) {
 			// パンチ
@@ -162,11 +178,11 @@ function init() {
 			scene = 3;
 		}
 		else if(redWin === 3) {
-			frameText.text = insideText.text = "RED WINS";
+			frameText.text = insideText.text = "LEFT WINS";
 			scene = 3;
 		}
 		else if(blueWin === 3) {
-			frameText.text = insideText.text = "BLUE WINS";
+			frameText.text = insideText.text = "RIGHT WINS";
 			scene = 3;
 		}
 	}
@@ -174,6 +190,8 @@ function init() {
 	// スタート
 	function start() {
 		createjs.Sound.play(area);
+		stage.removeChild(CPUText);
+		stage.removeChild(CPUButton);
 		frameText.text = insideText.text = "FIGHT";
 		scene = 1;
 	}
@@ -674,5 +692,42 @@ class Player {
 		attackMark.x = x;
 		attackMark.y = y + 100;
 		return attackMark;
+	}
+
+	// スター生成
+	makeStar(x, y) {
+		let star = new createjs.Shape();
+		star.graphics.beginFill("yellow");
+		star.graphics.beginStroke("black").setStrokeStyle(2);
+		star.graphics.drawPolyStar(0, 0, 50, 5, 0.6, -90);
+		star.regX = this.id * -150;
+		star.regY = -15;
+		star.x = x;
+		star.y = y;
+		return star;
+	}
+
+	// ランダムアクション
+	randomAction() {
+		// しゃがみ
+		let rand = Math.floor(Math.random() * 100);
+		if(rand < 30) this.isSquat = true;
+		else this.isSquat = false;
+		// ジャンプ
+		rand = Math.floor(Math.random() * 100);
+		if(rand < 10 && !this.isSquat) this.isJump = true;
+		// 移動
+		rand = Math.floor(Math.random() * 100);
+		if(rand < 50) {
+			this.isLeft = true;
+			this.isRight = false;
+		}
+		else {
+			this.isRight = true;
+			this.isLeft = false;
+		}
+		// 攻撃
+		rand = Math.floor(Math.random() * 100);
+		if(rand < 5) this.isMiddle = true;
 	}
 }
