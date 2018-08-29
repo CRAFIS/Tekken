@@ -9,8 +9,11 @@ function init() {
 
 	// バックグラウンド
 	let stageList = ["Arena", "Azure", "Helipad", "Italy", "Plane"];
-	let place;
+	let area;
 	let background;
+
+	// キャラクター
+	let character = ["Chloe", "Alisa", "Xiaoyu"];
 
 	// サークル
 	let circle = new createjs.Shape();
@@ -42,8 +45,8 @@ function init() {
 
 	// サウンド
 	createjs.Sound.registerSound("sound/setup.mp3", "setup");
-	createjs.Sound.registerSound("sound/punch.mp3", "punch");
-	createjs.Sound.registerSound("sound/kick.mp3", "kick");
+	createjs.Sound.registerSound("sound/middle.mp3", "middle");
+	createjs.Sound.registerSound("sound/low.mp3", "low");
 	createjs.Sound.registerSound("sound/ko.mp3", "ko");
 	createjs.Sound.registerSound("sound/jump.mp3", "jump");
 	createjs.Sound.registerSound("sound/landing.mp3", "landing");
@@ -76,14 +79,14 @@ function init() {
 
 	// アニメーション
 	function handleTick() {
-		if(scene === 0) { stage.update(); return; }
-		if(scene === -1) { pause(); return; }
+		if(scene === 0 || scene === 3) { stage.update(); return; }
+		if(scene === 2) { pause(); return; }
 
 		for(let i = 0; i < player.length; i++) {
 			// パンチ
-			if(player[i].isPunch) player[i].punch(player[i^1]);
+			if(player[i].isMiddle) player[i].middle(player[i^1]);
 			// ローキック
-			if(player[i].isLowKick) player[i].lowKick(player[i^1]);
+			if(player[i].isLow) player[i].low(player[i^1]);
 			// ジャンプ
 			else if(player[i].isJump) player[i].jump();
 			// しゃがみ
@@ -104,7 +107,7 @@ function init() {
 		count++;
 		countText.text = Math.ceil(60 - count/60);
 		if(count >= 60) frameText.text = insideText.text = "";
-		if(count >= 61*60) timeup(player[0], player[1]);
+		if(count >= 60*60) timeup(player[0], player[1]);
 
 		deadCheck(player[0], player[1]);
 
@@ -114,19 +117,22 @@ function init() {
 	// 初期化
 	function initialize() {
 		player = [];
+		let actor;
 
 		// バックグラウンド + BGM
-		place = stageList[Math.floor(Math.random() * stageList.length)];
-		background = new createjs.Bitmap("image/" + place + ".jpg");
-		createjs.Sound.registerSound("BGM/" + place + ".mp3", place);
+		area = stageList[Math.floor(Math.random() * stageList.length)];
+		background = new createjs.Bitmap("area/" + area + ".jpg");
+		createjs.Sound.registerSound("music/" + area + ".mp3", area);
 
-		// レッドマンの初期化
-		player[0] = new Player(1, 320, 350, "#ff0060");
+		// プレイヤーの初期化
+		actor = character[Math.floor(Math.random() * character.length)];
+		player[0] = new Player(1, 320, 350, actor);
 		player[0].line.graphics.drawRect(19, 19, 402, 42);
 		player[0].gauge.graphics.drawRect(20, 20, 400, 40);
 
-		// ブルーマンの初期化
-		player[1] = new Player(-1, 640, 350, "#00afff");
+		// プレイヤーの初期化
+		actor = character[Math.floor(Math.random() * character.length)];
+		player[1] = new Player(-1, 640, 350, actor);
 		player[1].line.graphics.drawRect(539, 19, 402, 42);
 		player[1].gauge.graphics.drawRect(540, 20, 400, 40);
 
@@ -153,24 +159,21 @@ function init() {
 		// リザルト
 		if(redWin === 3 && blueWin === 3) {
 			frameText.text = insideText.text = "DRAW";
+			scene = 3;
 		}
 		else if(redWin === 3) {
 			frameText.text = insideText.text = "RED WINS";
+			scene = 3;
 		}
 		else if(blueWin === 3) {
 			frameText.text = insideText.text = "BLUE WINS";
+			scene = 3;
 		}
-		else return;
-
-		// 終了
-		stage.update();
-		createjs.Ticker.removeAllEventListeners();
-		stage.removeAllEventListeners();
 	}
 
 	// スタート
 	function start() {
-		createjs.Sound.play(place);
+		createjs.Sound.play(area);
 		frameText.text = insideText.text = "FIGHT";
 		scene = 1;
 	}
@@ -179,7 +182,8 @@ function init() {
 	function pause() {
 		count++;
 		if(count >= 60*2) {
-			createjs.Sound.stop(place);
+			createjs.Sound.stop(area);
+			stage.removeAllChildren();
 			scene = 0;
 			initialize();
 		}
@@ -202,7 +206,7 @@ function init() {
 		else return;
 		createjs.Sound.play("ko");
 		count = 0;
-		scene = -1;
+		scene = 2;
 	}
 
 	// タイムアップ
@@ -219,10 +223,9 @@ function init() {
 			blueWin++;
 			frameText.text = insideText.text = "TIME UP";
 		}
-		countText.text = 0;
 		createjs.Sound.play("end");
 		count = 0;
-		scene = -1;
+		scene = 2;
 	}
 
 	// 勝利数表示
@@ -248,27 +251,45 @@ function init() {
 			stage.addChild(blueCircle[i]);
 		}
 	}
+
+	// グリッド表示
+	function drawGrid() {
+		let line = new createjs.Shape();
+		line.graphics.beginStroke("black").setStrokeStyle(2);
+		line.graphics.moveTo(0, 0).lineTo(960, 0);
+		line.y = 250;
+		stage.addChild(line.clone());
+		line.y = 500;
+		stage.addChild(line.clone());
+		line = new createjs.Shape();
+		line.graphics.beginStroke("black").setStrokeStyle(2);
+		line.graphics.moveTo(0, 0).lineTo(0, 540);
+		line.x = 240;
+		stage.addChild(line.clone());
+		line.x = 400;
+		stage.addChild(line.clone());
+	}
 }
 
 class Player {
 	// コンストラクタ
-	constructor(id, x, y, color) {
+	constructor(id, x, y, design) {
 		this.id = id;
-		this.color = color;
+		this.design = design;
 		this.player = this.initialMode(x, y);
-		this.star = null;
+		this.attackMark = null;
 		this.upperBullet = [];
 		this.lowerBullet = [];
 		this.isLeft = false;
 		this.isRight = false;
 		this.isJump = false;
 		this.isSquat = false;
-		this.isPunch = false;
-		this.isLowKick = false;
+		this.isMiddle = false;
+		this.isLow = false;
 		this.isGuard = true;
 		this.waitTime = 0;
-		this.punchTime = 0;
-		this.lowKickTime = 0;
+		this.middleTime = 0;
+		this.lowTime = 0;
 		this.jumpTime = 0;
 		this.HP = 400;
 		this.rageDrive = "Unused";
@@ -284,21 +305,23 @@ class Player {
 	reset(target) {
 		if(!target.isSquat) {
 			stage.removeChild(target.player);
-			target.player = target.initialMode(target.player.x, target.player.y);
+			target.player = target.initialMode
+				(target.player.x, target.player.y);
 			stage.addChild(target.player);
 		}
-		stage.removeChild(target.star);
-		target.punchTime = 0;
-		target.lowKickTime = 0;
+		stage.removeChild(target.attackMark);
 		target.waitTime = 0;
-		target.isLowKick = false;
-		target.isPunch = false;
+		target.middleTime = 0;
+		target.lowTime = 0;
+		target.isMiddle = false;
+		target.isLow = false;
 	}
 
 	// ガードチェック
 	guardCheck() {
 		this.isGuard = false;
-		if(!this.isJump && !this.isSquat && !this.isPunch && !this.isLowKick) {
+		if(!this.isJump && !this.isSquat &&
+				!this.isMiddle && !this.isLow) {
 			if(this.id === 1 && !this.isRight) this.isGuard = true;
 			else if(this.id === -1 && !this.isLeft) this.isGuard = true;
 		}
@@ -306,7 +329,7 @@ class Player {
 
 	// しゃがみ
 	squat() {
-		if(this.isJump || this.isPunch) return;
+		if(this.isJump || this.isMiddle) return;
 		stage.removeChild(this.player);
 		this.player = this.squatMode(this.player.x, this.player.y);
 		stage.addChild(this.player);
@@ -314,7 +337,7 @@ class Player {
 
 	// 右移動
 	right(target) {
-		if(this.isPunch || this.isLowKick || this.isSquat) return;
+		if(this.isMiddle || this.isLow || this.isSquat) return;
 		if(this.id === 1 && this.player.x + 80 < target.player.x)
 			this.player.x += 5;
 		else if(this.id === -1)
@@ -323,7 +346,7 @@ class Player {
 
 	// 左移動
 	left(target) {
-		if(this.isPunch || this.isLowKick || this.isSquat) return;
+		if(this.isMiddle || this.isLow || this.isSquat) return;
 		if(this.id === 1)
 			this.player.x -= 3;
 		else if(this.id === -1 && this.player.x - 80 > target.player.x)
@@ -359,57 +382,16 @@ class Player {
 		stage.addChild(target.gauge);
 	}
 
-	// ローキック
-	lowKick(target) {
-		if(this.jumpTime > this.lowKickTime ||
-				this.waitTime !== 0 || this.punchTime !== 0) {
-			this.isLowKick = false;
-			return;
-		}
+	// 中段攻撃
+	middle(target) {
 		// 入力時
-		if(this.lowKickTime === 0) {
-			stage.removeChild(this.player);
-			this.player = this.lowKickMode(this.player.x, this.player.y);
-			stage.addChild(this.player);
-			this.lowKickTime++;
-			createjs.Sound.play("kick");
-		}
-		// 攻撃時
-		else if(this.lowKickTime !== 0) {
-			if(this.lowKickTime === 1) {
-				for(let i = 0; i <= 120; i += 10) {
-					let point = target.player.globalToLocal
-						(this.player.x + this.id * i, this.player.y + 120);
-					if(target.player.hitTest(point.x, point.y)) {
-						target.player.x += this.id * 50;
-						if(!target.isSquat || target.isLowKick) {
-							target.HP -= 25 + (10 * (this.HP <= 75));
-							this.updateGauge(target);
-							this.reset(target);
-							target.isLowKick = true;
-							target.lowKickTime = 20;
-							this.lowKickTime = 20;
-						}
-						else this.reset(target);
-						break;
-					}
-				}
-			}
-			this.lowKickTime++;
-			if(this.lowKickTime >= 50) this.reset(this);
-		}
-	}
-
-	// パンチ
-	punch(target) {
-		// 入力時
-		if(this.waitTime === 0 && this.punchTime === 0) {
-			if(this.isSquat || this.isLowKick) {
-				this.isLowKick = true;
+		if(this.waitTime === 0 && this.middleTime === 0) {
+			if(this.isSquat || this.isLow) {
+				this.isLow = true;
 				return;
 			}
 			stage.removeChild(this.player);
-			this.player = this.waitPunchMode(this.player.x, this.player.y);
+			this.player = this.waitMiddleMode(this.player.x, this.player.y);
 			stage.addChild(this.player);
 			this.waitTime++;
 			createjs.Sound.play("setup");
@@ -417,72 +399,108 @@ class Player {
 		// 硬直時
 		else if(this.waitTime !== 0) {
 			if(this.HP <= 75 && this.rageDrive === "Unused") {
-				if(this.isJump && this.jumpTime === 0) this.rageDrive = "Upper";
+				if(this.isJump && this.jumpTime === 0)
+					this.rageDrive = "Upper";
 				else if(this.isSquat) this.rageDrive = "Lower";
 			}
 			this.waitTime++;
-			if(this.waitTime >= 20) {
+			if(this.waitTime >= 15) {
 				stage.removeChild(this.player);
-				if(this.rageDrive === "Upper")
-					this.player = this.punchMode(this.player.x, this.player.y);
-				else if(this.rageDrive === "Lower")
-					this.player = this.squatMode(this.player.x, this.player.y);
-				else {
-					this.player = this.punchMode(this.player.x, this.player.y);
-					this.star = this.makeStar(this.player.x, this.player.y);
-					this.star.x = this.player.x;
-					this.star.y = this.player.y;
-					stage.addChild(this.star);
+				if(this.rageDrive === "Lower")
+					this.player = this.squatMode
+						(this.player.x, this.player.y);
+				else if(this.rageDrive !== "Upper") {
+					this.player = this.initialMode
+						(this.player.x, this.player.y);
+					this.attackMark = this.makeMiddle
+						(this.player.x, this.player.y);
+					stage.addChild(this.attackMark);
 				}
 				stage.addChild(this.player);
 				this.waitTime = 0;
-				this.punchTime++;
-				createjs.Sound.play("punch");
+				this.middleTime++;
+				createjs.Sound.play("middle");
 			}
 		}
 		// 攻撃時
-		else if(this.punchTime !== 0) {
+		else if(this.middleTime !== 0) {
 			if(this.rageDrive === "Upper") this.upperRageDrive();
 			else if(this.rageDrive === "Lower") this.lowerRageDrive();
-			else if(this.punchTime === 1) {
-				let point1 = target.player.globalToLocal
-					(this.player.x + this.id * 90, this.player.y - 10);
-				let point2 = target.player.globalToLocal
-					(this.player.x + this.id * 137, this.player.y + 24);
-				let point3 = target.player.globalToLocal
-					(this.player.x + this.id * 120, this.player.y + 80);
-				let point4 = target.player.globalToLocal
-					(this.player.x + this.id * 90, this.player.y + 40);
-				if(target.player.hitTest(point1.x, point1.y) ||
-						target.player.hitTest(point2.x, point2.y) ||
-						target.player.hitTest(point3.x, point3.y) ||
-						target.player.hitTest(point4.x, point4.y)) {
-					target.player.x += this.id * 50;
-					if(!target.isGuard) {
-						target.HP -= 50 + (15 * (this.HP <= 75));
-						this.updateGauge(target);
-						this.reset(target);
-						target.isPunch = true;
-						target.punchTime = 2;
+			else if(this.middleTime === 1) {
+				for(let i = 25; i < 205; i += 10) {
+					let point = target.player.globalToLocal
+					(this.attackMark.x + this.id * i, this.attackMark.y);
+					if(target.player.hitTest(point.x, point.y)) {
+						target.player.x += this.id * 50;
+						if(!target.isGuard) {
+							target.HP -= 50 + (15 * (this.HP <= 75));
+							this.updateGauge(target);
+							this.reset(target);
+							target.isMiddle = true;
+							target.middleTime = 2;
+						}
+						else this.reset(target);
+						break;
 					}
-					else this.reset(target);
 				}
 			}
-			this.punchTime++;
-			if(this.punchTime >= 20) {
-				if(this.rageDrive === "Upper" || this.rageDrive === "Lower")
+			this.middleTime++;
+			if(this.middleTime >= 20) {
+				if(this.rageDrive==="Upper" || this.rageDrive==="Lower")
 					this.rageDrive = "Used";
 				this.reset(this);
 			}
 		}
-		if(this.jumpTime < this.waitTime || this.jumpTime < this.punchTime)
-			this.isJump = false;
+		if(this.player.y === 350) this.isJump = false;
+	}
+
+	// 下段攻撃
+	low(target) {
+		if(this.jumpTime > this.lowTime ||
+				this.waitTime !== 0 || this.middleTime !== 0) {
+			this.isLow = false;
+			return;
+		}
+		// 入力時
+		if(this.lowTime === 0) {
+			stage.removeChild(this.player);
+			this.player = this.squatMode(this.player.x, this.player.y);
+			this.attackMark = this.makeLow(this.player.x, this.player.y);
+			stage.addChild(this.attackMark);
+			stage.addChild(this.player);
+			this.lowTime++;
+			createjs.Sound.play("low");
+		}
+		// 攻撃時
+		else if(this.lowTime !== 0) {
+			if(this.lowTime === 1) {
+				for(let i = 25; i <= 195; i += 10) {
+					let point = target.player.globalToLocal
+					(this.attackMark.x + this.id * i, this.attackMark.y);
+					if(target.player.hitTest(point.x, point.y)) {
+						target.player.x += this.id * 50;
+						if(!target.isSquat || target.isLow) {
+							target.HP -= 25 + (10 * (this.HP <= 75));
+							this.updateGauge(target);
+							this.reset(target);
+							target.isLow = true;
+							target.lowTime = 20;
+							this.lowTime = 20;
+						}
+						else this.reset(target);
+						break;
+					}
+				}
+			}
+			this.lowTime++;
+			if(this.lowTime >= 50) this.reset(this);
+		}
 	}
 
 	// 上段レイジドライブ
 	upperRageDrive(target = null) {
 		if(target === null) {
-			let bullet = this.makeBullet(this.player.x, this.player.y, -40);
+			let bullet = this.makeBullet(this.player.x, this.player.y, -80);
 			this.upperBullet.push(bullet);
 			stage.addChild(bullet);
 		}
@@ -507,7 +525,8 @@ class Player {
 	// 下段レイジドライブ
 	lowerRageDrive(target = null) {
 		if(target === null) {
-			let bullet = this.makeBullet(this.player.x, this.player.y, 50);
+			let bullet = this.makeBullet
+				(this.player.x, this.player.y, 20);
 			this.lowerBullet.push(bullet);
 			stage.addChild(bullet);
 		}
@@ -517,7 +536,7 @@ class Player {
 				let point = target.player.globalToLocal
 					(this.lowerBullet[i].x, this.lowerBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
-					if(!target.isSquat || target.isLowKick) {
+					if(!target.isSquat || target.isLow) {
 						target.HP -= 10;
 						this.updateGauge(target);
 					}
@@ -532,21 +551,22 @@ class Player {
 	// 弾生成
 	makeBullet(x, y, basis) {
 		let bullet = new createjs.Shape();
-		bullet.graphics.beginFill(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
+		bullet.graphics.beginFill
+			(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
 		bullet.graphics.beginStroke("black").setStrokeStyle(0.5);
 		bullet.graphics.drawPolyStar(0, 0, 15, 8, 0.6, -90);
 		bullet.x = x;
-		bullet.y = y + basis + Math.random() * 100;
+		bullet.y = y + basis + Math.random() * 120;
 		return bullet;
 	}
 
 	// キーダウン
-	handleKeydown(keyCode, left, right, jump, down, punch) {
+	handleKeydown(keyCode, left, right, jump, down, middle) {
 		if(keyCode === left) this.isLeft = true;
 		else if(keyCode === right) this.isRight = true;
 		else if(keyCode === jump && !this.isSquat) this.isJump = true;
 		else if(keyCode === down) this.isSquat = true;
-		else if(keyCode === punch) this.isPunch = true;
+		else if(keyCode === middle) this.isMiddle = true;
 	}
 
 	// キーアップ
@@ -555,9 +575,10 @@ class Player {
 		else if(keyCode === right) this.isRight = false;
 		else if(keyCode === down) {
 			this.isSquat = false;
-			if(this.lowKickTime === 0) {
+			if(this.lowTime === 0) {
 				stage.removeChild(this.player);
-				this.player = this.initialMode(this.player.x, this.player.y);
+				this.player = this.initialMode
+					(this.player.x, this.player.y);
 				stage.addChild(this.player);
 			}
 		}
@@ -565,144 +586,93 @@ class Player {
 
 	// 初期モード
 	initialMode(x, y) {
-		let player = new createjs.Container();
+		let player;
+		if(this.design === "Chloe") {
+			player = new createjs.Bitmap("character/Chloe.png");
+			player.regX = 100;
+			player.regY = 105;
+		}
+		if(this.design === "Alisa") {
+			player = new createjs.Bitmap("character/Alisa.png");
+			player.scale = 0.95;
+			player.regX = 85;
+			player.regY = 132;
+		}
+		if(this.design === "Xiaoyu") {
+			player = new createjs.Bitmap("character/Xiaoyu.png");
+			player.scale = 0.25;
+			player.regX = 400;
+			player.regY = 420;
+		}
 		player.x = x;
 		player.y = y;
-		let face = new createjs.Shape();
-		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
-		let line = new createjs.Shape();
-		line.graphics.beginFill(this.color);
-		// 胴体
-		line.graphics.beginStroke(this.color).setStrokeStyle(30);
-		line.graphics.moveTo(0, 0).lineTo(0, 110);
-		// 両足
-		line.graphics.setStrokeStyle(10);
-		line.graphics.moveTo(0, 110).lineTo(-40, 110);
-		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
-		line.graphics.moveTo(0, 110).lineTo(40, 110);
-		line.graphics.moveTo(35, 110).lineTo(35, 150);
-		// 両手
-		line.graphics.moveTo(0, 60).lineTo(55, 60);
-		line.graphics.moveTo(50, 60).lineTo(50, 60 - this.id * 30);
-		line.graphics.moveTo(0, 60).lineTo(-55, 60);
-		line.graphics.moveTo(-50, 60).lineTo(-50, 60 - this.id * 30);
-		player.addChild(face);
-		player.addChild(line);
-		// player.setTransform(0, 0, 1, 1);
 		return player;
 	}
 
-	// パンチ準備モード
-	waitPunchMode(x, y) {
+	// 中段攻撃準備モード
+	waitMiddleMode(x, y) {
 		let player = new createjs.Container();
 		player.x = x;
 		player.y = y;
-		let face = new createjs.Shape();
-		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
-		let line = new createjs.Shape();
-		line.graphics.beginFill(this.color);
-		// 胴体
-		line.graphics.beginStroke(this.color).setStrokeStyle(30);
-		line.graphics.moveTo(0, 0).lineTo(0, 110);
-		// 両足
-		line.graphics.setStrokeStyle(10);
-		line.graphics.moveTo(0, 110).lineTo(-40, 110);
-		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
-		line.graphics.moveTo(0, 110).lineTo(40, 110);
-		line.graphics.moveTo(35, 110).lineTo(35, 150);
-		// 両手
-		line.graphics.moveTo(0, 60).lineTo(-60, 40);
-		line.graphics.moveTo(0, 60).lineTo(60, 40);
-		player.addChild(face);
-		player.addChild(line);
+		let aura = new createjs.Bitmap("image/aura.png");
+		aura.scale = 0.4;
+		aura.x = -120;
+		aura.y = -130;
+		player.addChild(aura);
+		player.addChild(this.initialMode(0, 0));
 		return player;
-	}
-
-	// パンチモード
-	punchMode(x, y) {
-		let player = new createjs.Container();
-		player.x = x;
-		player.y = y;
-		let face = new createjs.Shape();
-		face.graphics.beginFill(this.color).drawCircle(0, 0, 40);
-		let line = new createjs.Shape();
-		line.graphics.beginFill(this.color);
-		// 胴体
-		line.graphics.beginStroke(this.color).setStrokeStyle(30);
-		line.graphics.moveTo(0, 0).lineTo(0, 110);
-		// 両足
-		line.graphics.setStrokeStyle(10);
-		line.graphics.moveTo(0, 110).lineTo(-40, 110);
-		line.graphics.moveTo(-35, 110).lineTo(-35, 150);
-		line.graphics.moveTo(0, 110).lineTo(40, 110);
-		line.graphics.moveTo(35, 110).lineTo(35, 150);
-		// 両手
-		line.graphics.moveTo(0, 60).lineTo(this.id * 50, 75);
-		line.graphics.moveTo(0, 60).lineTo(this.id * 50, 45);
-		player.addChild(face);
-		player.addChild(line);
-		return player;
-	}
-
-	// スター生成
-	makeStar(x, y) {
-		let star = new createjs.Shape();
-		star.graphics.beginFill("yellow");
-		star.graphics.beginStroke("black").setStrokeStyle(2);
-		star.graphics.drawPolyStar(this.id * 90, 40, 50, 5, 0.6, -90);
-		return star;
 	}
 
 	// しゃがみモード
 	squatMode(x, y) {
-		let player = new createjs.Container();
+		let player;
+		if(this.design === "Chloe") {
+			player = new createjs.Bitmap("character/Chloe2.png");
+			player.scale = 0.4;
+			player.regX = 400;
+			player.regY = 50;
+			player.rotation = -30;
+		}
+		if(this.design === "Alisa") {
+			player = new createjs.Bitmap("character/Alisa2.png");
+			player.scale = 0.42;
+			player.regX = 120;
+			player.regY = 120;
+			player.rotation = 20;
+		}
+		if(this.design === "Xiaoyu") {
+			player = new createjs.Bitmap("character/Xiaoyu2.png");
+			player.scale = 0.65;
+			player.regX = 100;
+			player.regY = 25;
+		}
 		player.x = x;
 		player.y = y;
-		let face = new createjs.Shape();
-		face.graphics.beginFill(this.color).drawCircle(0, 40, 40);
-		let line = new createjs.Shape();
-		line.graphics.beginFill(this.color);
-		// 胴体
-		line.graphics.beginStroke(this.color).setStrokeStyle(30);
-		line.graphics.moveTo(0, 40).lineTo(0, 150);
-		// 両足
-		line.graphics.setStrokeStyle(15);
-		line.graphics.moveTo(0, 142.5).lineTo(this.id * -40, 142.5);
-		line.graphics.moveTo(0, 120).lineTo(this.id * 50, 120);
-		line.graphics.moveTo(this.id * 42.5, 120).lineTo(this.id * 42.5, 150);
-		// 両手
-		line.graphics.setStrokeStyle(10);
-		line.graphics.moveTo(0, 90).lineTo(this.id * 50, 90);
-		line.graphics.moveTo(0, 90).lineTo(this.id * -40, 120);
-		player.addChild(face);
-		player.addChild(line);
 		return player;
 	}
 
-	// ローキックモード
-	lowKickMode(x, y) {
-		let player = new createjs.Container();
-		player.x = x;
-		player.y = y;
-		let face = new createjs.Shape();
-		face.graphics.beginFill(this.color).drawCircle(0, 40, 40);
-		let line = new createjs.Shape();
-		line.graphics.beginFill(this.color);
-		// 胴体
-		line.graphics.beginStroke(this.color).setStrokeStyle(30);
-		line.graphics.moveTo(0, 40).lineTo(0, 150);
-		// 両足
-		line.graphics.setStrokeStyle(15);
-		line.graphics.moveTo(0, 142.5).lineTo(this.id * -40, 142.5);
-		line.graphics.moveTo(0, 120).lineTo(this.id * 70, 120);
-		line.graphics.setStrokeStyle(1).moveTo(this.id * 70, 100)
-			.lineTo(this.id * 70, 140).lineTo(this.id * 120, 120);
-		// 両手
-		line.graphics.setStrokeStyle(10);
-		line.graphics.moveTo(0, 90).lineTo(this.id * 50, 90);
-		line.graphics.moveTo(0, 90).lineTo(this.id * -40, 120);
-		player.addChild(face);
-		player.addChild(line);
-		return player;
+	// 中段攻撃生成
+	makeMiddle(x, y) {
+		let attackMark = new createjs.Bitmap("image/middle.png");
+		attackMark.scaleX = 0.5;
+		attackMark.scaleY = 0.7;
+		attackMark.regX = -10;
+		attackMark.regY = 195;
+		attackMark.rotation = 180 * (this.id === -1);
+		attackMark.x = x;
+		attackMark.y = y;
+		return attackMark;
+	}
+
+	// 下段攻撃生成
+	makeLow(x, y) {
+		let attackMark = new createjs.Bitmap("image/low.png");
+		attackMark.scaleX = 0.5;
+		attackMark.regX = 400;
+		attackMark.regY = 133;
+		attackMark.rotation = 180 * (this.id === 1);
+		attackMark.x = x;
+		attackMark.y = y + 100;
+		return attackMark;
 	}
 }
