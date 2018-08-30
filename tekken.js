@@ -48,10 +48,7 @@ function init() {
 	let CPUButton = new createjs.Shape();
 	CPUButton.graphics.beginStroke("black").setStrokeStyle(2);
 	CPUButton.graphics.beginFill("white").drawRect(695, 500, 262, 37);
-	CPUButton.addEventListener("click", function (){
-		if(CPU) { CPU = false; CPUText.text = "CPU MODE: OFF"; }
-		else { CPU = true; CPUText.text = "CPU MODE: ON"; }
-	});
+	CPUButton.addEventListener("click", clickCPU);
 
 	// サウンド
 	createjs.Sound.registerSound("sound/setup.mp3", "setup");
@@ -133,7 +130,7 @@ function init() {
 	// 初期化
 	function initialize() {
 		player = [];
-		let actor;
+		let actor = [];
 
 		// バックグラウンド + BGM
 		area = stageList[Math.floor(Math.random() * stageList.length)];
@@ -141,14 +138,15 @@ function init() {
 		createjs.Sound.registerSound("music/" + area + ".mp3", area);
 
 		// プレイヤーの初期化
-		actor = character[Math.floor(Math.random() * character.length)];
-		player[0] = new Player(1, 320, 350, actor);
+		actor[0] = character[Math.floor(Math.random() * character.length)];
+		player[0] = new Player(1, 320, 350, actor[0]);
 		player[0].line.graphics.drawRect(19, 19, 402, 42);
 		player[0].gauge.graphics.drawRect(20, 20, 400, 40);
 
 		// プレイヤーの初期化
-		actor = character[Math.floor(Math.random() * character.length)];
-		player[1] = new Player(-1, 640, 350, actor);
+		while(actor[0] === (actor[1] = character
+					[Math.floor(Math.random() * character.length)]));
+		player[1] = new Player(-1, 640, 350, actor[1]);
 		player[1].line.graphics.drawRect(539, 19, 402, 42);
 		player[1].gauge.graphics.drawRect(540, 20, 400, 40);
 
@@ -286,6 +284,22 @@ function init() {
 		stage.addChild(line.clone());
 		line.x = 400;
 		stage.addChild(line.clone());
+	}
+
+	// CPUモード
+	function clickCPU() {
+		if(CPU) {
+			CPU = false;
+			CPUText.text = "CPU MODE: OFF";
+			CPUText.x = 700;
+			CPUText.y = 500;
+		}
+		else {
+			CPU = true;
+			CPUText.text = "CPU MODE: ON";
+			CPUText.x = 705;
+			CPUText.y = 500;
+		}
 	}
 }
 
@@ -647,9 +661,9 @@ class Player {
 		if(this.design === "Chloe") {
 			player = new createjs.Bitmap("character/Chloe2.png");
 			player.scale = 0.4;
-			player.regX = 400;
-			player.regY = 50;
-			player.rotation = -30;
+			player.regX = 320;
+			player.regY = 150;
+			player.rotation = 0;
 		}
 		if(this.design === "Alisa") {
 			player = new createjs.Bitmap("character/Alisa2.png");
@@ -709,25 +723,29 @@ class Player {
 
 	// ランダムアクション
 	randomAction() {
-		// しゃがみ
-		let rand = Math.floor(Math.random() * 100);
-		if(rand < 30) this.isSquat = true;
-		else this.isSquat = false;
-		// ジャンプ
+		let downKey = null;
+		let upKey = null;
+		let left = 37;
+		let right = 39;
+		let jump = 38;
+		let down = 40;
+		let middle = 110;
+		let rand;
+
+		// キーダウン
 		rand = Math.floor(Math.random() * 100);
-		if(rand < 10 && !this.isSquat) this.isJump = true;
-		// 移動
+		if(rand < 10) downKey = down;
+		else if(rand < 40) downKey = left;
+		else if(rand < 90) downKey = right;
+		else if(rand < 95) downKey = jump;
+		else downKey = middle;
+		this.handleKeydown(downKey, left, right, jump, down, middle);
+
+		// キーアップ
 		rand = Math.floor(Math.random() * 100);
-		if(rand < 50) {
-			this.isLeft = true;
-			this.isRight = false;
-		}
-		else {
-			this.isRight = true;
-			this.isLeft = false;
-		}
-		// 攻撃
-		rand = Math.floor(Math.random() * 100);
-		if(rand < 5) this.isMiddle = true;
+		if(rand < 10) upKey = left;
+		else if(rand < 20) upKey = right;
+		else if(rand < 25) upKey = down;
+		this.handleKeyUp(upKey, left, right, down);
 	}
 }
