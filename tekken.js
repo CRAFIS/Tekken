@@ -335,12 +335,9 @@ class Player {
 
 	// リセット
 	reset(target) {
-		if(!target.isSquat) {
-			stage.removeChild(target.player);
+		if(!target.isSquat)
 			target.player = target.initialMode
 				(target.player.x, target.player.y);
-			stage.addChild(target.player);
-		}
 		stage.removeChild(target.attackMark);
 		target.waitTime = 0;
 		target.middleTime = 0;
@@ -362,9 +359,7 @@ class Player {
 	// しゃがみ
 	squat() {
 		if(this.isJump || this.isMiddle) return;
-		stage.removeChild(this.player);
 		this.player = this.squatMode(this.player.x, this.player.y);
-		stage.addChild(this.player);
 	}
 
 	// 右移動
@@ -390,8 +385,12 @@ class Player {
 		if(this.jumpTime === 0) createjs.Sound.play("jump");
 		if(this.jumpTime !== 0 && this.isSquat) this.isSquat = false;
 		this.jumpTime++;
-		this.player.y += (this.jumpTime - 15) * 2;
-		if(this.jumpTime > 28) {
+		if(this.jumpTime > 5) {
+			this.player = this.initialMode(this.player.x, this.player.y);
+			this.player.y += (this.jumpTime - 20) * 2;
+		}
+		else this.player = this.squatMode(this.player.x, this.player.y);
+		if(this.jumpTime > 33) {
 			this.jumpTime = 0;
 			this.isJump = false;
 			createjs.Sound.play("landing");
@@ -422,9 +421,7 @@ class Player {
 				this.isLow = true;
 				return;
 			}
-			stage.removeChild(this.player);
 			this.player = this.waitMiddleMode(this.player.x, this.player.y);
-			stage.addChild(this.player);
 			this.waitTime++;
 			createjs.Sound.play("setup");
 		}
@@ -433,11 +430,11 @@ class Player {
 			if(this.HP <= 75 && this.rageDrive === "Unused") {
 				if(this.isJump && this.jumpTime === 0)
 					this.rageDrive = "Upper";
-				else if(this.isSquat) this.rageDrive = "Lower";
+				else if(this.isSquat && !this.isJump)
+					this.rageDrive = "Lower";
 			}
 			this.waitTime++;
 			if(this.waitTime >= 15) {
-				stage.removeChild(this.player);
 				if(this.rageDrive === "Lower")
 					this.player = this.squatMode
 						(this.player.x, this.player.y);
@@ -446,9 +443,7 @@ class Player {
 						(this.player.x, this.player.y);
 					this.attackMark = this.makeMiddle
 						(this.player.x, this.player.y);
-					stage.addChild(this.attackMark);
 				}
-				stage.addChild(this.player);
 				this.waitTime = 0;
 				this.middleTime++;
 				createjs.Sound.play("middle");
@@ -483,7 +478,7 @@ class Player {
 				this.reset(this);
 			}
 		}
-		if(this.player.y === 350) this.isJump = false;
+		if(this.jumpTime === 0) this.isJump = false;
 	}
 
 	// 下段攻撃
@@ -495,11 +490,8 @@ class Player {
 		}
 		// 入力時
 		if(this.lowTime === 0) {
-			stage.removeChild(this.player);
 			this.player = this.squatMode(this.player.x, this.player.y);
 			this.attackMark = this.makeLow(this.player.x, this.player.y);
-			stage.addChild(this.attackMark);
-			stage.addChild(this.player);
 			this.lowTime++;
 			createjs.Sound.play("low");
 		}
@@ -542,6 +534,7 @@ class Player {
 				let point = target.player.globalToLocal
 					(this.upperBullet[i].x, this.upperBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
+					target.player.x += this.id * 5;
 					if(!target.isGuard) {
 						target.HP -= 10;
 						this.updateGauge(target);
@@ -568,6 +561,7 @@ class Player {
 				let point = target.player.globalToLocal
 					(this.lowerBullet[i].x, this.lowerBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
+					target.player.x += this.id * 5;
 					if(!target.isSquat || target.isLow) {
 						target.HP -= 10;
 						this.updateGauge(target);
@@ -608,10 +602,8 @@ class Player {
 		else if(keyCode === down) {
 			this.isSquat = false;
 			if(this.lowTime === 0) {
-				stage.removeChild(this.player);
 				this.player = this.initialMode
 					(this.player.x, this.player.y);
-				stage.addChild(this.player);
 			}
 		}
 	}
@@ -638,6 +630,8 @@ class Player {
 		}
 		player.x = x;
 		player.y = y;
+		stage.removeChild(this.player);
+		stage.addChild(player);
 		return player;
 	}
 
@@ -652,6 +646,8 @@ class Player {
 		aura.y = -130;
 		player.addChild(aura);
 		player.addChild(this.initialMode(0, 0));
+		stage.removeChild(this.player);
+		stage.addChild(player);
 		return player;
 	}
 
@@ -663,14 +659,12 @@ class Player {
 			player.scale = 0.4;
 			player.regX = 320;
 			player.regY = 150;
-			player.rotation = 0;
 		}
 		if(this.design === "Alisa") {
 			player = new createjs.Bitmap("character/Alisa2.png");
 			player.scale = 0.42;
-			player.regX = 120;
-			player.regY = 120;
-			player.rotation = 20;
+			player.regX = 280;
+			player.regY = 100;
 		}
 		if(this.design === "Xiaoyu") {
 			player = new createjs.Bitmap("character/Xiaoyu2.png");
@@ -680,6 +674,8 @@ class Player {
 		}
 		player.x = x;
 		player.y = y;
+		stage.removeChild(this.player);
+		stage.addChild(player);
 		return player;
 	}
 
@@ -693,6 +689,7 @@ class Player {
 		attackMark.rotation = 180 * (this.id === -1);
 		attackMark.x = x;
 		attackMark.y = y;
+		stage.addChild(attackMark);
 		return attackMark;
 	}
 
@@ -705,6 +702,7 @@ class Player {
 		attackMark.rotation = 180 * (this.id === 1);
 		attackMark.x = x;
 		attackMark.y = y + 100;
+		stage.addChild(attackMark);
 		return attackMark;
 	}
 
@@ -718,6 +716,7 @@ class Player {
 		star.regY = -15;
 		star.x = x;
 		star.y = y;
+		stage.addChild(star);
 		return star;
 	}
 
