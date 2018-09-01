@@ -4,6 +4,7 @@ let stage;
 
 function init() {
 	stage = new createjs.Stage("myCanvas");
+	stage.enableMouseOver();
 	let scene = 0;
 	let player = [];
 
@@ -27,28 +28,29 @@ function init() {
 
 	// メッセージ
 	let frameText = new createjs.Text("", "100px serif", "black");
+	frameText.textAlign = "center";
 	frameText.x = 483;
 	frameText.y = 118;
-	frameText.textAlign = "center";
 	let insideText = frameText.clone();
 	insideText.color = "red";
 	insideText.x = 480;
 	insideText.y = 120;
 
 	// 勝利数 + ラウンド
-	let redWin = 0;
-	let blueWin = 0;
+	let leftWin = 0;
+	let rightWin = 0;
 	let round = 3;
 
-	// CPUモード
-	let CPU = false;
-	let CPUText = new createjs.Text("CPU MODE: OFF", "30px serif", "black");
-	CPUText.x = 700;
-	CPUText.y = 500;
-	let CPUButton = new createjs.Shape();
-	CPUButton.graphics.beginStroke("black").setStrokeStyle(2);
-	CPUButton.graphics.beginFill("white").drawRect(695, 500, 262, 37);
-	CPUButton.addEventListener("click", clickCPU);
+	// モード
+	let modeList = ["VS", "EASY", "NORMAL", "HARD", "IMPOSSIBLE"];
+	let modeButton = [];
+	let mode = null;
+	let norm = null;
+	let modeText = new createjs.Text("", "30px serif", "black");
+	modeText.textAlign = "center";
+	modeText.x = 480;
+	modeText.y = 500;
+	modeText.alpha = 0.5;
 
 	// サウンド
 	createjs.Sound.registerSound("sound/setup.mp3", "setup");
@@ -62,18 +64,26 @@ function init() {
 	createjs.Sound.volume = 0.2;
 
 	initialize();
-	stage.addChild(CPUButton);
-	stage.addChild(CPUText);
+	drawMode();
 
-	window.addEventListener("keydown", handleKeydown);
+	window.addEventListener("keydown", handleKeyDown);
 	window.addEventListener("keyup", handleKeyUp);
 
 	// キーダウン
-	function handleKeydown(event) {
+	function handleKeyDown(event) {
 		let keyCode = event.keyCode;
-		player[0].handleKeydown(keyCode, 65, 68, 87, 83, 71);
-		player[1].handleKeydown(keyCode, 37, 39, 38, 40, 110);
-		if(keyCode === 32 && scene === 0) start();
+		player[0].handleKeyDown(keyCode, 65, 68, 87, 83, 71);
+		player[1].handleKeyDown(keyCode, 37, 39, 38, 40, 110);
+		if(keyCode === 32) {
+			if(scene === 0 && mode !== null) start();
+			else if(scene === 3) {
+				scene = 0;
+				mode = norm = null;
+				initialize();
+				for(let i = 0; i < modeButton.length; i++)
+					stage.addChild(modeButton[i]);
+			}
+		}
 	}
 
 	// キーアップ
@@ -92,8 +102,8 @@ function init() {
 		if(scene === 0 || scene === 3) { stage.update(); return; }
 		if(scene === 2) { pause(); return; }
 
-		// CPUモード
-		if(CPU) player[1].randomAction();
+		// モード
+		if(mode !== "VS") player[1].randomAction(player[0], norm);
 
 		for(let i = 0; i < player.length; i++) {
 			// パンチ
@@ -157,6 +167,7 @@ function init() {
 
 		// ステージ
 		stage.addChild(background);
+		stage.addChild(modeText);
 		stage.addChild(player[0].player);
 		stage.addChild(player[1].player);
 		stage.addChild(player[0].line);
@@ -171,16 +182,14 @@ function init() {
 		drawWinMark();
 
 		// リザルト
-		if(redWin === 3 && blueWin === 3) {
+		if(leftWin === 3 && rightWin === 3)
 			frameText.text = insideText.text = "DRAW";
-			scene = 3;
-		}
-		else if(redWin === 3) {
+		else if(leftWin === 3)
 			frameText.text = insideText.text = "LEFT WINS";
-			scene = 3;
-		}
-		else if(blueWin === 3) {
+		else if(rightWin === 3)
 			frameText.text = insideText.text = "RIGHT WINS";
+		if(leftWin === 3 || rightWin === 3) {
+			leftWin = rightWin = 0;
 			scene = 3;
 		}
 	}
@@ -188,8 +197,6 @@ function init() {
 	// スタート
 	function start() {
 		createjs.Sound.play(area);
-		stage.removeChild(CPUText);
-		stage.removeChild(CPUButton);
 		frameText.text = insideText.text = "FIGHT";
 		scene = 1;
 	}
@@ -208,15 +215,15 @@ function init() {
 	// デッドチェック
 	function deadCheck(red, blue) {
 		if(red.HP <= 0 && blue.HP <= 0) {
-			redWin++; blueWin++;
+			leftWin++; rightWin++;
 			frameText.text = insideText.text = "DOUBLE K.O.";
 		}
 		else if(red.HP <= 0) {
-			blueWin++;
+			rightWin++;
 			frameText.text = insideText.text = "K.O.";
 		}
 		else if(blue.HP <= 0) {
-			redWin++;
+			leftWin++;
 			frameText.text = insideText.text = "K.O.";
 		}
 		else return;
@@ -228,15 +235,15 @@ function init() {
 	// タイムアップ
 	function timeup(red, blue) {
 		if(red.HP === blue.HP) {
-			redWin++; blueWin++;
+			leftWin++; rightWin++;
 			frameText.text = insideText.text = "TIME UP";
 		}
 		else if(red.HP > blue.HP) {
-			redWin++;
+			leftWin++;
 			frameText.text = insideText.text = "TIME UP";
 		}
 		else if(blue.HP > red.HP) {
-			blueWin++;
+			rightWin++;
 			frameText.text = insideText.text = "TIME UP";
 		}
 		createjs.Sound.play("end");
@@ -246,8 +253,8 @@ function init() {
 
 	// 勝利数表示
 	function drawWinMark() {
-		let redCircle = [];
-		let blueCircle = [];
+		let leftCircle = [];
+		let rightCircle = [];
 		for(let i = 0; i < round; i++) {
 			let initial = new createjs.Shape();
 			initial.graphics.beginStroke("black").setStrokeStyle(1);
@@ -255,16 +262,16 @@ function init() {
 			let win = new createjs.Shape();
 			win.graphics.beginStroke("black").setStrokeStyle(1);
 			win.graphics.beginFill("#00bbff").drawCircle(0, 0, 10);
-			if(i < redWin) redCircle[i] = win.clone();
-			else redCircle[i] = initial.clone();
-			redCircle[i].x = 410 - i * 30;
-			redCircle[i].y = 80;
-			if(i < blueWin) blueCircle[i] = win.clone();
-			else blueCircle[i] = initial.clone();
-			blueCircle[i].x = 550 + i * 30;
-			blueCircle[i].y = 80;
-			stage.addChild(redCircle[i]);
-			stage.addChild(blueCircle[i]);
+			if(i < leftWin) leftCircle[i] = win.clone();
+			else leftCircle[i] = initial.clone();
+			leftCircle[i].x = 410 - i * 30;
+			leftCircle[i].y = 80;
+			if(i < rightWin) rightCircle[i] = win.clone();
+			else rightCircle[i] = initial.clone();
+			rightCircle[i].x = 550 + i * 30;
+			rightCircle[i].y = 80;
+			stage.addChild(leftCircle[i]);
+			stage.addChild(rightCircle[i]);
 		}
 	}
 
@@ -286,21 +293,82 @@ function init() {
 		stage.addChild(line.clone());
 	}
 
-	// CPUモード
-	function clickCPU() {
-		if(CPU) {
-			CPU = false;
-			CPUText.text = "CPU MODE: OFF";
-			CPUText.x = 700;
-			CPUText.y = 500;
+	// モード表示
+	function drawMode() {
+		for(let i = 0; i < modeList.length; i++) {
+			// ボタン
+			let btn = new createjs.Container();
+			btn.cursor = "pointer";
+			// 通常時
+			let btnUp = new createjs.Shape();
+			btnUp.graphics.beginStroke("black").setStrokeStyle(5);
+			btnUp.graphics.beginFill("LightGreen").drawCircle(0, 0, 100);
+			btn.addChild(btnUp);
+			btnUp.visible = true;
+			// ロールオーバー時
+			let btnOver = new createjs.Shape();
+			btnOver.graphics.beginStroke("black").setStrokeStyle(5);
+			btnOver.graphics.beginFill("pink").drawCircle(0, 0, 100);
+			btn.addChild(btnOver);
+			btnOver.visible = false;
+			// テキスト
+			let txt = new createjs.Text(modeList[i], "30px serif", "black");
+			txt.textAlign = "center";
+			txt.textBaseline = "middle";
+			if(i === 0) txt.font = "35px serif";
+			if(i === 4) txt.color = "#d00000";
+			btn.addChild(txt);
+			modeButton.push(btn);
 		}
-		else {
-			CPU = true;
-			CPUText.text = "CPU MODE: ON";
-			CPUText.x = 705;
-			CPUText.y = 500;
+		modeButton[0].x = 480;
+		modeButton[0].y = 200;
+		modeButton[1].x = 140;
+		modeButton[1].y = 200;
+		modeButton[2].x = 310;
+		modeButton[2].y = 420;
+		modeButton[3].x = 650;
+		modeButton[3].y = 420;
+		modeButton[4].x = 820;
+		modeButton[4].y = 200;
+		for(let i = 0; i < modeList.length; i++) {
+			stage.addChild(modeButton[i]);
+			// クリックイベント
+			modeButton[i].addEventListener("click", function() {
+				changeMode(i);
+			});
+			// ロールオーバーイベント
+			modeButton[i].addEventListener("mouseover", function() {
+				modeButton[i].getChildAt(0).visible = false;
+				modeButton[i].getChildAt(1).visible = true;
+			});
+			modeButton[i].addEventListener("mouseout", function() {
+				modeButton[i].getChildAt(0).visible = true;
+				modeButton[i].getChildAt(1).visible = false;
+			});
 		}
 	}
+
+	// モードチェンジ
+	function changeMode(id) {
+		mode = modeList[id];
+		modeText.text = mode;
+		for(let i = 0; i < modeList.length; i++)
+			stage.removeChild(modeButton[i]);
+		if(mode === modeList[0]) norm = null;
+		else if(mode === modeList[1]) norm = 0;
+		else if(mode === modeList[2]) norm = 0.25;
+		else if(mode === modeList[3]) norm = 0.5;
+		else if(mode === modeList[4]) norm = 1;
+		scene = 0;
+	}
+
+	// 音量調節
+	circle.addEventListener("click", function() {
+		if(createjs.Sound.volume === 0.2)
+			createjs.Sound.volume = 0.1;
+		else if(createjs.Sound.volume === 0.1)
+			createjs.Sound.volume = 0.2;
+	});
 }
 
 class Player {
@@ -349,8 +417,7 @@ class Player {
 	// ガードチェック
 	guardCheck() {
 		this.isGuard = false;
-		if(!this.isJump && !this.isSquat &&
-				!this.isMiddle && !this.isLow) {
+		if(!this.isJump && !this.isSquat && !this.isMiddle && !this.isLow) {
 			if(this.id === 1 && !this.isRight) this.isGuard = true;
 			else if(this.id === -1 && !this.isLeft) this.isGuard = true;
 		}
@@ -457,6 +524,7 @@ class Player {
 				for(let i = 25; i < 205; i += 10) {
 					let point = target.player.globalToLocal
 					(this.attackMark.x + this.id * i, this.attackMark.y);
+					// ヒットテスト
 					if(target.player.hitTest(point.x, point.y)) {
 						target.player.x += this.id * 50;
 						if(!target.isGuard) {
@@ -464,7 +532,8 @@ class Player {
 							this.updateGauge(target);
 							this.reset(target);
 							target.isMiddle = true;
-							target.middleTime = 2;
+							target.middleTime = 10;
+							this.middleTime = 10;
 						}
 						else this.reset(target);
 						break;
@@ -472,7 +541,7 @@ class Player {
 				}
 			}
 			this.middleTime++;
-			if(this.middleTime >= 20) {
+			if(this.middleTime >= 30) {
 				if(this.rageDrive==="Upper" || this.rageDrive==="Lower")
 					this.rageDrive = "Used";
 				this.reset(this);
@@ -501,6 +570,7 @@ class Player {
 				for(let i = 25; i <= 195; i += 10) {
 					let point = target.player.globalToLocal
 					(this.attackMark.x + this.id * i, this.attackMark.y);
+					// ヒットテスト
 					if(target.player.hitTest(point.x, point.y)) {
 						target.player.x += this.id * 50;
 						if(!target.isSquat || target.isLow) {
@@ -575,19 +645,19 @@ class Player {
 	}
 
 	// 弾生成
-	makeBullet(x, y, basis) {
+	makeBullet(x, y, norm) {
 		let bullet = new createjs.Shape();
 		bullet.graphics.beginFill
 			(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
 		bullet.graphics.beginStroke("black").setStrokeStyle(0.5);
 		bullet.graphics.drawPolyStar(0, 0, 15, 8, 0.6, -90);
 		bullet.x = x;
-		bullet.y = y + basis + Math.random() * 120;
+		bullet.y = y + norm + Math.random() * 120;
 		return bullet;
 	}
 
 	// キーダウン
-	handleKeydown(keyCode, left, right, jump, down, middle) {
+	handleKeyDown(keyCode, left, right, jump, down, middle) {
 		if(keyCode === left) this.isLeft = true;
 		else if(keyCode === right) this.isRight = true;
 		else if(keyCode === jump && !this.isSquat) this.isJump = true;
@@ -721,30 +791,42 @@ class Player {
 	}
 
 	// ランダムアクション
-	randomAction() {
-		let downKey = null;
-		let upKey = null;
+	randomAction(target, norm) {
 		let left = 37;
 		let right = 39;
 		let jump = 38;
 		let down = 40;
 		let middle = 110;
-		let rand;
 
 		// キーダウン
-		rand = Math.floor(Math.random() * 100);
-		if(rand < 10) downKey = down;
-		else if(rand < 40) downKey = left;
-		else if(rand < 90) downKey = right;
-		else if(rand < 95) downKey = jump;
-		else downKey = middle;
-		this.handleKeydown(downKey, left, right, jump, down, middle);
+		if(target.isLow && target.lowTime <= 10 && Math.random() < norm)
+			this.handleKeyDown(down, left, right, jump, down, middle);
+		if(this.player.x - target.player.x > 300)
+			this.handleKeyDown(left, left, right, jump, down, middle);
+		if(Math.random() < 0.1)
+			this.handleKeyDown(down, left, right, jump, down, middle);
+		if(Math.random() < 0.3)
+			this.handleKeyDown(left, left, right, jump, down, middle);
+		if(Math.random() < 0.5)
+			this.handleKeyDown(right, left, right, jump, down, middle);
+		if(Math.random() < 0.1 && this.lowTime < 20 &&
+		!(target.isMiddle && !target.isLow && target.middleTime <= 1))
+			this.handleKeyDown(jump, left, right, jump, down, middle);
+		if(Math.random() < 0.2 && this.player.x - target.player.x < 200 &&
+			!(target.isMiddle && !target.isLow && target.middleTime <= 1))
+			this.handleKeyDown(middle, left, right, jump, down, middle);
 
 		// キーアップ
-		rand = Math.floor(Math.random() * 100);
-		if(rand < 10) upKey = left;
-		else if(rand < 20) upKey = right;
-		else if(rand < 25) upKey = down;
-		this.handleKeyUp(upKey, left, right, down);
+		if(target.isMiddle && !target.isLow && target.middleTime <= 1 &&
+		this.player.x - target.player.x < 300 && Math.random() < norm) {
+			this.handleKeyUp(left, left, right, down);
+			this.handleKeyUp(down, left, right, down);
+		}
+		if(Math.random() < 0.1)
+			this.handleKeyUp(left, left, right, down);
+		if(Math.random() < 0.1)
+			this.handleKeyUp(right, left, right, down);
+		if(Math.random() < 0.1)
+			this.handleKeyUp(down, left, right, down);
 	}
 }
