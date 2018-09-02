@@ -154,8 +154,7 @@ function init() {
 		player[0].gauge.graphics.drawRect(20, 20, 400, 40);
 
 		// プレイヤーの初期化
-		while(actor[0] === (actor[1] = character
-					[Math.floor(Math.random() * character.length)]));
+		while(actor[0] === (actor[1] = character[Math.floor(Math.random() * character.length)]));
 		player[1] = new Player(-1, 640, 350, actor[1]);
 		player[1].line.graphics.drawRect(539, 19, 402, 42);
 		player[1].gauge.graphics.drawRect(540, 20, 400, 40);
@@ -601,8 +600,7 @@ class Player {
 		else {
 			for(let i = 0; i < this.upperBullet.length; i++) {
 				this.upperBullet[i].x += this.id * 10;
-				let point = target.player.globalToLocal
-					(this.upperBullet[i].x, this.upperBullet[i].y);
+				let point = target.player.globalToLocal(this.upperBullet[i].x, this.upperBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
 					target.player.x += this.id * 5;
 					if(!target.isGuard) {
@@ -620,16 +618,14 @@ class Player {
 	// 下段レイジドライブ
 	lowerRageDrive(target = null) {
 		if(target === null) {
-			let bullet = this.makeBullet
-				(this.player.x, this.player.y, 20);
+			let bullet = this.makeBullet(this.player.x, this.player.y, 20);
 			this.lowerBullet.push(bullet);
 			stage.addChild(bullet);
 		}
 		else {
 			for(let i = 0; i < this.lowerBullet.length; i++) {
 				this.lowerBullet[i].x += this.id * 10;
-				let point = target.player.globalToLocal
-					(this.lowerBullet[i].x, this.lowerBullet[i].y);
+				let point = target.player.globalToLocal(this.lowerBullet[i].x, this.lowerBullet[i].y);
 				if(target.player.hitTest(point.x, point.y)) {
 					target.player.x += this.id * 5;
 					if(!target.isSquat || target.isLow) {
@@ -647,8 +643,7 @@ class Player {
 	// 弾生成
 	makeBullet(x, y, norm) {
 		let bullet = new createjs.Shape();
-		bullet.graphics.beginFill
-			(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
+		bullet.graphics.beginFill(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
 		bullet.graphics.beginStroke("black").setStrokeStyle(0.5);
 		bullet.graphics.drawPolyStar(0, 0, 15, 8, 0.6, -90);
 		bullet.x = x;
@@ -672,8 +667,7 @@ class Player {
 		else if(keyCode === down) {
 			this.isSquat = false;
 			if(this.lowTime === 0) {
-				this.player = this.initialMode
-					(this.player.x, this.player.y);
+				this.player = this.initialMode(this.player.x, this.player.y);
 			}
 		}
 	}
