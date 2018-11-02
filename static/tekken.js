@@ -53,14 +53,14 @@ function init() {
 	modeText.alpha = 0.5;
 
 	// サウンド
-	createjs.Sound.registerSound("sound/setup.mp3", "setup");
-	createjs.Sound.registerSound("sound/middle.mp3", "middle");
-	createjs.Sound.registerSound("sound/low.mp3", "low");
-	createjs.Sound.registerSound("sound/ko.mp3", "ko");
-	createjs.Sound.registerSound("sound/jump.mp3", "jump");
-	createjs.Sound.registerSound("sound/landing.mp3", "landing");
-	createjs.Sound.registerSound("sound/end.mp3", "end");
-	createjs.Sound.registerSound("sound/hit.mp3", "hit");
+	createjs.Sound.registerSound("static/sound/setup.mp3", "setup");
+	createjs.Sound.registerSound("static/sound/middle.mp3", "middle");
+	createjs.Sound.registerSound("static/sound/low.mp3", "low");
+	createjs.Sound.registerSound("static/sound/ko.mp3", "ko");
+	createjs.Sound.registerSound("static/sound/jump.mp3", "jump");
+	createjs.Sound.registerSound("static/sound/landing.mp3", "landing");
+	createjs.Sound.registerSound("static/sound/end.mp3", "end");
+	createjs.Sound.registerSound("static/sound/hit.mp3", "hit");
 	createjs.Sound.volume = 0.2;
 
 	initialize();
@@ -144,8 +144,8 @@ function init() {
 
 		// バックグラウンド + BGM
 		area = stageList[Math.floor(Math.random() * stageList.length)];
-		background = new createjs.Bitmap("area/" + area + ".jpg");
-		createjs.Sound.registerSound("music/" + area + ".mp3", area);
+		background = new createjs.Bitmap("static/area/" + area + ".jpg");
+		createjs.Sound.registerSound("static/music/" + area + ".mp3", area);
 
 		// プレイヤーの初期化
 		actor[0] = character[Math.floor(Math.random() * character.length)];
@@ -676,18 +676,18 @@ class Player {
 	initialMode(x, y) {
 		let player;
 		if(this.design === "Chloe") {
-			player = new createjs.Bitmap("character/Chloe.png");
+			player = new createjs.Bitmap("static/character/Chloe.png");
 			player.regX = 100;
 			player.regY = 105;
 		}
 		if(this.design === "Alisa") {
-			player = new createjs.Bitmap("character/Alisa.png");
+			player = new createjs.Bitmap("static/character/Alisa.png");
 			player.scale = 0.95;
 			player.regX = 85;
 			player.regY = 132;
 		}
 		if(this.design === "Xiaoyu") {
-			player = new createjs.Bitmap("character/Xiaoyu.png");
+			player = new createjs.Bitmap("static/character/Xiaoyu.png");
 			player.scale = 0.25;
 			player.regX = 400;
 			player.regY = 420;
@@ -704,7 +704,7 @@ class Player {
 		let player = new createjs.Container();
 		player.x = x;
 		player.y = y;
-		let aura = new createjs.Bitmap("image/aura.png");
+		let aura = new createjs.Bitmap("static/image/aura.png");
 		aura.scale = 0.4;
 		aura.x = -120;
 		aura.y = -130;
@@ -719,19 +719,19 @@ class Player {
 	squatMode(x, y) {
 		let player;
 		if(this.design === "Chloe") {
-			player = new createjs.Bitmap("character/Chloe2.png");
+			player = new createjs.Bitmap("static/character/Chloe2.png");
 			player.scale = 0.4;
 			player.regX = 320;
 			player.regY = 150;
 		}
 		if(this.design === "Alisa") {
-			player = new createjs.Bitmap("character/Alisa2.png");
+			player = new createjs.Bitmap("static/character/Alisa2.png");
 			player.scale = 0.42;
 			player.regX = 280;
 			player.regY = 100;
 		}
 		if(this.design === "Xiaoyu") {
-			player = new createjs.Bitmap("character/Xiaoyu2.png");
+			player = new createjs.Bitmap("static/character/Xiaoyu2.png");
 			player.scale = 0.65;
 			player.regX = 100;
 			player.regY = 25;
@@ -745,7 +745,7 @@ class Player {
 
 	// 中段攻撃生成
 	makeMiddle(x, y) {
-		let attackMark = new createjs.Bitmap("image/middle.png");
+		let attackMark = new createjs.Bitmap("static/image/middle.png");
 		attackMark.scaleX = 0.5;
 		attackMark.scaleY = 0.7;
 		attackMark.regX = -10;
@@ -759,7 +759,7 @@ class Player {
 
 	// 下段攻撃生成
 	makeLow(x, y) {
-		let attackMark = new createjs.Bitmap("image/low.png");
+		let attackMark = new createjs.Bitmap("static/image/low.png");
 		attackMark.scaleX = 0.5;
 		attackMark.regX = 400;
 		attackMark.regY = 133;
