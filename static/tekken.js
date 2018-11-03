@@ -69,6 +69,11 @@ function init() {
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
+    // タッチ操作
+    if(createjs.Touch.isSupported()){
+        createjs.Touch.enable(stage)
+    }
+
     // キーダウン
     function handleKeyDown(event) {
         let keyCode = event.keyCode;
@@ -103,7 +108,17 @@ function init() {
         if(scene === 2) { pause(); return; }
 
         // モード
-        if(mode !== "VS") player[1].randomAction(player[0], norm);
+        if(mode !== "VS") {
+            player[1].randomAction(player[0], norm);
+            background.addEventListener("click", function() {
+                if(createjs.Touch.isSupported()) {
+                    player[0].isMiddle = true;
+                    player[0].player.x = stage.mouseX;
+                    if(player[0].player.x + 80 > player[1].player.x)
+                        player[0].player.x = player[1].player.x - 80;
+                }
+            });
+        }
 
         for(let i = 0; i < player.length; i++) {
             // パンチ
@@ -145,6 +160,17 @@ function init() {
         // バックグラウンド + BGM
         area = stageList[Math.floor(Math.random() * stageList.length)];
         background = new createjs.Bitmap("static/area/" + area + ".jpg");
+        // クリック
+        background.addEventListener("click", function() {
+            if(scene === 0 && mode !== null) start();
+            else if(scene === 3) {
+                scene = 0;
+                mode = norm = null;
+                initialize();
+                for(let i = 0; i < modeButton.length; i++)
+                    stage.addChild(modeButton[i]);
+            }
+        });
         createjs.Sound.registerSound("static/music/" + area + ".mp3", area);
 
         // プレイヤーの初期化
@@ -394,9 +420,7 @@ class Player {
 
     // リセット
     reset(target) {
-        if(!target.isSquat)
-            target.player = target.initialMode
-        (target.player.x, target.player.y);
+        if(!target.isSquat) target.player = target.initialMode(target.player.x, target.player.y);
         stage.removeChild(target.attackMark);
         target.waitTime = 0;
         target.middleTime = 0;
