@@ -10,8 +10,9 @@ function init() {
 
     // バックグラウンド
     let stageList = ["Arena", "Azure", "Helipad", "Italy", "Plane"];
-    let area;
     let background;
+    let area;
+    let BGM;
 
     // キャラクター
     let character = ["Chloe", "Alisa", "Xiaoyu"];
@@ -108,15 +109,19 @@ function init() {
         if(scene === 2) { pause(); return; }
 
         // モード
-        if(mode !== "VS") {
-            player[1].randomAction(player[0], norm);
+        if(mode !== "VS") player[1].randomAction(player[0], norm);
+
+        // スマホ専用
+        if(!createjs.Touch.isSupported()) {
             background.addEventListener("click", function() {
-                if(createjs.Touch.isSupported()) {
-                    player[0].isMiddle = true;
-                    player[0].player.x = stage.mouseX;
-                    if(player[0].player.x + 80 > player[1].player.x)
-                        player[0].player.x = player[1].player.x - 80;
-                }
+                player[0].isMiddle = true;
+                if(player[0].HP <= 75 && player[0].rageDrive === "Unused")
+                    player[0].rageDrive = "Upper";
+            });
+            background.addEventListener("pressmove", function() {
+                player[0].player.x = stage.mouseX;
+                if(player[0].player.x + 80 > player[1].player.x)
+                    player[0].player.x = player[1].player.x - 80;
             });
         }
 
@@ -149,13 +154,17 @@ function init() {
 
         deadCheck(player[0], player[1]);
 
+        if(createjs.Sound.loadComplete(area) && !BGM)
+            BGM = createjs.Sound.play(area);
+
         stage.update();
     }
 
     // 初期化
     function initialize() {
-        player = [];
         let actor = [];
+        player = [];
+        BGM = null;
 
         // バックグラウンド + BGM
         area = stageList[Math.floor(Math.random() * stageList.length)];
@@ -221,7 +230,6 @@ function init() {
 
     // スタート
     function start() {
-        createjs.Sound.play(area);
         frameText.text = insideText.text = "FIGHT";
         scene = 1;
     }
