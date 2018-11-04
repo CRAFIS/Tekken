@@ -6,13 +6,11 @@ td, th {
     padding: 0.5em;
 }
 .menu {
-    width: 360px;
+    width: 370px;
     display: inline-block;
-    position: relative;
-    vertical-align: top;
     overflow: auto;
     height: 540px;
-    right: -20px;
+    margin-left: 10px;
 }
 .button {
     display: inline-block;

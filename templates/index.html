@@ -11,92 +11,15 @@
         <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
     </head>
     <body>
-        <div style="display: inline-block;">
-            <canvas id="myCanvas" width="960" height="540"></canvas>
+        <div style="width: 1350px;">
+            <div style="display: inline-block;">
+                <canvas id="myCanvas" width="960" height="540"></canvas>
+            </div>
+            <div class="menu">
+                {{ menu | safe }}
+            </div>
         </div>
-        <div class="menu">
-            <h1>操作方法</h1>
-            <ul>
-                <li>スペースキーまたはクリックでスタート</li>
-                <li>3ラウンド制</li>
-                <li>体力が一定以下になるとレイジ状態へ移行</li>
-            </ul>
-            <h2>LEFT</h2>
-            <table>
-                <tr>
-                    <th>行動</th>
-                    <th>コマンド</th>
-                </tr>
-                    <td>左移動</td>
-                    <td>A</td>
-                <tr>
-                    <td>右移動</td>
-                    <td>D</td>
-                </tr>
-                <tr>
-                    <td>ジャンプ</td>
-                    <td>W</td>
-                </tr>
-                <tr>
-                    <td>しゃがむ</td>
-                    <td>S</td>
-                </tr>
-                <tr>
-                    <td>攻撃</td>
-                    <td>G</td>
-                </tr>
-            </table>
-            <h2>RIGHT</h2>
-            <table>
-                <tr>
-                    <th>行動</th>
-                    <th>コマンド</th>
-                </tr>
-                    <td>左移動</td>
-                    <td>←</td>
-                <tr>
-                    <td>右移動</td>
-                    <td>→</td>
-                </tr>
-                <tr>
-                    <td>ジャンプ</td>
-                    <td>↑</td>
-                </tr>
-                <tr>
-                    <td>しゃがむ</td>
-                    <td>↓</td>
-                </tr>
-                <tr>
-                    <td>攻撃</td>
-                    <td>
-                        .<span style="font-size: small;"> (テンキー)</span>
-                    </td>
-                </tr>
-            </table>
-            <h2>技表</h2>
-            <table>
-                <tr>
-                    <th>技名</th>
-                    <th>コマンド</th>
-                </tr>
-                    <td>ミドルパンチ</td>
-                    <td>
-                        攻撃<span style="font-size: small;"> (ジャンプ中も可)</span>
-                    </td>
-                <tr>
-                    <td>ローキック</td>
-                    <td>しゃがみ中 攻撃</td>
-                </tr>
-                <tr>
-                    <td>上段レイジドライブ</td>
-                    <td>レイジ中 攻撃↑</td>
-                </tr>
-                <tr>
-                    <td>下段レイジドライブ</td>
-                    <td>レイジ中 攻撃↓</td>
-                </tr>
-            </table>
-        </div>
+        <div>
         <button class="button" id="down">
             <span style="font-size: large;">
                 <i class="fas fa-caret-left"></i>
@@ -113,5 +36,6 @@
                 <i class="fas fa-caret-right"></i>
             </span>
         </button>
+        </div>
     </body>
 </html>

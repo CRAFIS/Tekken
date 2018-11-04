@@ -6,7 +6,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    menu = render_template("menu.html")
+    return render_template("index.html", menu = menu)
 
 if __name__ == "__main__":
     port = 8888
