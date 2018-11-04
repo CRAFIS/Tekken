@@ -112,7 +112,7 @@ function init() {
         if(mode !== "VS") player[1].randomAction(player[0], norm);
 
         // スマホ専用
-        if(!createjs.Touch.isSupported()) {
+        if(createjs.Touch.isSupported()) {
             background.addEventListener("click", function() {
                 player[0].isMiddle = true;
                 if(player[0].HP <= 75 && player[0].rageDrive === "Unused")
