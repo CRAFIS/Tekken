@@ -1,7 +1,7 @@
 FROM python:3.6
 
-RUN apk update
-RUN apk add git
+RUN apt update
+RUN apt install git
 
 RUN git clone https://github.com/CRAFIS/Tekken.git
 RUN pip install -r /Tekken/requirements.txt
