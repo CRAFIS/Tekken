@@ -7,4 +7,4 @@ RUN git clone https://github.com/CRAFIS/Tekken.git
 RUN pip install -r /Tekken/requirements.txt
 
 WORKDIR /Tekken
-CMD gunicorn run:app
+CMD gunicorn run:app -b localhost:8888
