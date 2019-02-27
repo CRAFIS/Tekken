@@ -6,5 +6,5 @@ RUN apt install git
 RUN git clone https://github.com/CRAFIS/Tekken.git
 RUN pip install -r /Tekken/requirements.txt
 
-WORKDIR /Tekken
-CMD gunicorn run:app -b 0.0.0.0:8888
+ENV FLASK_APP /Tekken/run.py
+CMD flask run -h 0.0.0.0 -p $PORT
