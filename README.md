@@ -1,10 +1,21 @@
-# 操作方法
+# Tekken
+
+## Deployment
+
+```
+$ heroku login
+$ heroku create <App Name>
+$ heroku container:push --app <App Name> web
+$ heroku container:release web --app <App Name>
+```
+
+## 操作方法
 
 - スペースキーまたはクリックでラウンド開始
 - 3ラウンド制
 - 体力が一定以下になるとレイジ状態へ移行
 
-## LEFT
+### LEFT
 
 | 行動 | コマンド |
 |:----:|:----:|
@@ -14,7 +25,7 @@
 | しゃがむ | S |
 | 攻撃 | G |
 
-## RIGHT
+### RIGHT
 
 | 行動 | コマンド |
 |:----:|:----:|
@@ -26,7 +37,7 @@
 
 *1 : テンキー
 
-## 技表
+### 技表
 
 | 技名 | コマンド |
 |:----:|:----:|
