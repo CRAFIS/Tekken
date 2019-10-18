@@ -4,6 +4,7 @@ RUN apt update
 RUN apt install git
 
 RUN git clone https://github.com/CRAFIS/Tekken.git
+RUN pip install --upgrade pip
 RUN pip install -r /Tekken/requirements.txt
 
 WORKDIR /Tekken

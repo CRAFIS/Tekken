@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>Tekken</title>
-        <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-        <script src="{{ url_for("static", filename="tekken.js") }}"></script>
-        <link rel="stylesheet" href="{{ url_for("static", filename="index.css") }}">
-        <link rel="shortcut icon" href="{{ url_for("static", filename="favicon.png") }}">
-        <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
-    </head>
-    <body>
-        <div style="width: 1350px;">
-            <div style="display: inline-block;">
-                <canvas id="myCanvas" width="960" height="540"></canvas>
-            </div>
-            <div class="menu">
-                {{ menu | safe }}
-            </div>
+<head>
+    <meta charset="UTF-8">
+    <title>Tekken</title>
+    <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="{{ url_for("static", filename="tekken.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static", filename="index.css") }}">
+    <link rel="shortcut icon" href="{{ url_for("static", filename="favicon.png") }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+</head>
+
+<body>
+    <div style="width: 1350px; margin: 10px 0 5px 10px;">
+        <div style="display: inline-block;">
+            <canvas id="myCanvas" width="960" height="540" class="rounded" style="border: 3px solid black;"></canvas>
         </div>
-        <div>
-        <button class="button" id="down">
+        <div class="menu rounded">
+            {{ menu | safe }}
+        </div>
+    </div>
+
+    <div style="margin: 0 10px;">
+        <div class="btn btn-primary" id="down" style="width: 50px; cursor: pointer;">
             <span style="font-size: large;">
                 <i class="fas fa-caret-left"></i>
             </span>
-        </button>
-        <button class="button" id="mute">
+        </div>
+        <div class="btn btn-primary" id="mute" style="width: 100px; cursor: pointer;">
             <span style="font-size: large;">
                 <i class="fas fa-volume-up"></i>
                 <span id="volume" style="font-weight: bold;">5</span>
             </span>
-        </button>
-        <button class="button" id="up">
+        </div>
+        <div class="btn btn-primary" id="up" style="width: 50px; cursor: pointer;">
             <span style="font-size: large;">
                 <i class="fas fa-caret-right"></i>
             </span>
-        </button>
         </div>
-    </body>
+    </div>
+
+</body>
 </html>

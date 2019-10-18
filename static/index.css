@@ -11,24 +11,8 @@ td, th {
     overflow: auto;
     height: 540px;
     margin-left: 10px;
-}
-.button {
-    display: inline-block;
-    padding: 0.5em 1em;
-    text-decoration: none;
-    background: #668ad8;
-    color: #FFF;
-    border-bottom: solid 4px #627295;
-    border-radius: 3px;
-    cursor: pointer;
-    cursor: hand;
-}
-.button:active {
-    -ms-transform: translateY(4px);
-    -webkit-transform: translateY(4px);
-    transform: translateY(4px);
-    box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-    border-bottom: none;
+    border: 2px solid black;
+    padding: 5px 10px;
 }
 ::-webkit-scrollbar {
     width: 10px;
