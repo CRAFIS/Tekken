@@ -79,7 +79,7 @@ function init() {
     function handleKeyDown(event) {
         let keyCode = event.keyCode;
         player[0].handleKeyDown(keyCode, 65, 68, 87, 83, 71);
-        player[1].handleKeyDown(keyCode, 37, 39, 38, 40, 110);
+        player[1].handleKeyDown(keyCode, 37, 39, 38, 40, 13);
         if(keyCode === 32) {
             if(scene === 0 && mode !== null) start();
             else if(scene === 3) {
@@ -814,7 +814,7 @@ class Player {
         let right = 39;
         let jump = 38;
         let down = 40;
-        let middle = 110;
+        let middle = 13;
 
         // キーダウン
         if(target.isLow && target.lowTime <= 10 && Math.random() < norm)
