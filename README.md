@@ -33,7 +33,7 @@ $ heroku container:release web --app <App Name>
 | 右移動 | → |
 | ジャンプ | ↑ |
 | しゃがむ | ↓ |
-| 攻撃 | . <sup>*1</sup> |
+| 攻撃 | Enter |
 
 *1 : テンキー
 
