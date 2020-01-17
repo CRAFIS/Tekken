@@ -3,6 +3,12 @@
 ## Deployment
 
 ```
+$ python3 run.py
+```
+
+## Deployment
+
+```
 $ heroku login
 $ heroku create <App Name>
 $ heroku container:push --app <App Name> web
