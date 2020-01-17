@@ -9,13 +9,25 @@ function init() {
     let player = [];
 
     // バックグラウンド
-    let stageList = ["Arena", "Azure", "Helipad", "Italy", "Plane"];
-    let background;
-    let area;
-    let BGM;
+    let invalidStage = "";
+    // let stageList = ["Arena", "Azure", "Helipad", "Italy", "Plane"];
+    let stageList = ["Castle", "Cave", "Fantasy", "Flower", "Moon", "Prison", "SeaDaytime", "SeaEvening", "SeaNight", "SkyCloudy", "SnowDaytime", "SnowNight", "Universe"];
+    let background, area, BGM;
 
     // キャラクター
-    let character = ["Chloe", "Alisa", "Xiaoyu"];
+    let invalidCharacters = [];
+    let characters = [
+        // {name: "Chloe", standScale: 1.0, standRegX: 150, standRegY: 105, crouchScale: 0.4, crouchRegX: 380, crouchRegY: 150},
+        // {name: "Alisa", standScale: 0.95, standRegX: 180, standRegY: 132, crouchScale: 0.42, crouchRegX: 380, crouchRegY: 100},
+        // {name: "Xiaoyu", standScale: 0.5, standRegX: 260, standRegY: 210, crouchScale: 0.65, crouchRegX: 140, crouchRegY: 25},
+        {name: "YokaiMan", standScale: 0.9, standRegX: 130, standRegY: 150, crouchScale: 1.3, crouchRegX: 100, crouchRegY: 25},
+        {name: "YokaiWoman", standScale: 0.75, standRegX: 200, standRegY: 140, crouchScale: 0.7, crouchRegX: 220, crouchRegY: 40},
+        {name: "Kuma", standScale: 0.75, standRegX: 230, standRegY: 160, crouchScale: 0.7, crouchRegX: 170, crouchRegY: 20},
+        {name: "Youmu", standScale: 1.1, standRegX: 150, standRegY: 90, crouchScale: 1.0, crouchRegX: 100, crouchRegY: 20},
+        {name: "Frandle", standScale: 1.1, standRegX: 150, standRegY: 90, crouchScale: 1.0, crouchRegX: 150, crouchRegY: 20},
+        {name: "Mochi", standScale: 1.2, standRegX: 110, standRegY: 100, crouchScale: 1.0, crouchRegX: 120, crouchRegY: 20},
+        {name: "Dullahan", standScale: 0.9, standRegX: 110, standRegY: 128, crouchScale: 0.8, crouchRegX: 95, crouchRegY: 10},
+    ];
 
     // カウント
     let count = 0;
@@ -162,12 +174,14 @@ function init() {
 
     // 初期化
     function initialize() {
-        let actor = [];
+        let actor = [], validStages = [], validCharacters = [];
         player = [];
         BGM = null;
 
         // バックグラウンド + BGM
-        area = stageList[Math.floor(Math.random() * stageList.length)];
+        validStages = stageList.filter(stage => stage !== invalidStage);
+        area = validStages[Math.floor(Math.random() * validStages.length)];
+        invalidStage = area;
         background = new createjs.Bitmap("static/area/" + area + ".jpg");
         // クリック
         background.addEventListener("click", function() {
@@ -183,16 +197,24 @@ function init() {
         createjs.Sound.registerSound("static/music/" + area + ".mp3", area);
 
         // プレイヤーの初期化
-        actor[0] = character[Math.floor(Math.random() * character.length)];
+        validCharacters = characters.filter(character => !invalidCharacters.includes(character));
+        actor[0] = validCharacters[Math.floor(Math.random() * validCharacters.length)];
+        invalidCharacters.push(actor[0]);
         player[0] = new Player(1, 320, 350, actor[0]);
         player[0].line.graphics.drawRect(19, 19, 402, 42);
         player[0].gauge.graphics.drawRect(20, 20, 400, 40);
+        new createjs.Bitmap(`static/character/${player[0].design.name}.png`);
+        new createjs.Bitmap(`static/character/${player[0].design.name}2.png`);
 
         // プレイヤーの初期化
-        while(actor[0] === (actor[1] = character[Math.floor(Math.random() * character.length)]));
+        validCharacters = characters.filter(character => !invalidCharacters.includes(character));
+        actor[1] = validCharacters[Math.floor(Math.random() * validCharacters.length)];
+        invalidCharacters = [actor[0], actor[1]];
         player[1] = new Player(-1, 640, 350, actor[1]);
         player[1].line.graphics.drawRect(539, 19, 402, 42);
         player[1].gauge.graphics.drawRect(540, 20, 400, 40);
+        new createjs.Bitmap(`static/character/${player[1].design.name}.png`);
+        new createjs.Bitmap(`static/character/${player[1].design.name}2.png`);
 
         // カウント
         count = 0;
@@ -667,7 +689,7 @@ class Player {
     // 弾生成
     makeBullet(x, y, norm) {
         let bullet = new createjs.Shape();
-        bullet.graphics.beginFill(createjs.Graphics.getHSL(360*Math.random(), 100, 50));
+        bullet.graphics.beginFill(createjs.Graphics.getHSL(360 * Math.random(), 100, 50));
         bullet.graphics.beginStroke("black").setStrokeStyle(0.5);
         bullet.graphics.drawPolyStar(0, 0, 15, 8, 0.6, -90);
         bullet.x = x;
@@ -699,25 +721,13 @@ class Player {
     // 初期モード
     initialMode(x, y) {
         let player;
-        if(this.design === "Chloe") {
-            player = new createjs.Bitmap("static/character/Chloe.png");
-            player.regX = 100;
-            player.regY = 105;
-        }
-        if(this.design === "Alisa") {
-            player = new createjs.Bitmap("static/character/Alisa.png");
-            player.scale = 0.95;
-            player.regX = 85;
-            player.regY = 132;
-        }
-        if(this.design === "Xiaoyu") {
-            player = new createjs.Bitmap("static/character/Xiaoyu.png");
-            player.scale = 0.25;
-            player.regX = 400;
-            player.regY = 420;
-        }
+        player = new createjs.Bitmap(`static/character/${this.design.name}.png`);
+        player.scale = this.design.standScale;
+        player.regX = this.design.standRegX;
+        player.regY = this.design.standRegY;
         player.x = x;
         player.y = y;
+        if(this.id === -1) player.scaleX = -1 * player.scale;
         stage.removeChild(this.player);
         stage.addChild(player);
         return player;
@@ -730,7 +740,7 @@ class Player {
         player.y = y;
         let aura = new createjs.Bitmap("static/image/aura.png");
         aura.scale = 0.4;
-        aura.x = -120;
+        aura.x = this.id === 1 ? -150 : -75;
         aura.y = -130;
         player.addChild(aura);
         player.addChild(this.initialMode(0, 0));
@@ -742,26 +752,13 @@ class Player {
     // しゃがみモード
     squatMode(x, y) {
         let player;
-        if(this.design === "Chloe") {
-            player = new createjs.Bitmap("static/character/Chloe2.png");
-            player.scale = 0.4;
-            player.regX = 320;
-            player.regY = 150;
-        }
-        if(this.design === "Alisa") {
-            player = new createjs.Bitmap("static/character/Alisa2.png");
-            player.scale = 0.42;
-            player.regX = 280;
-            player.regY = 100;
-        }
-        if(this.design === "Xiaoyu") {
-            player = new createjs.Bitmap("static/character/Xiaoyu2.png");
-            player.scale = 0.65;
-            player.regX = 100;
-            player.regY = 25;
-        }
+        player = new createjs.Bitmap(`static/character/${this.design.name}2.png`);
+        player.scale = this.design.crouchScale;
+        player.regX = this.design.crouchRegX;
+        player.regY = this.design.crouchRegY;
         player.x = x;
         player.y = y;
+        if(this.id === -1) player.scaleX = -1 * player.scale;
         stage.removeChild(this.player);
         stage.addChild(player);
         return player;
