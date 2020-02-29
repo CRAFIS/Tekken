@@ -1,5 +1,7 @@
 # Kakugame
 
+https://kakugame.herokuapp.com
+
 ## Deployment
 
 ```
