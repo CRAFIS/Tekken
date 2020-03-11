@@ -2,7 +2,7 @@
 
 https://kakugame.herokuapp.com
 
-## Deployment
+## Development
 
 ```
 $ python3 run.py
@@ -12,9 +12,9 @@ $ python3 run.py
 
 ```
 $ heroku login
-$ heroku create <App Name>
-$ heroku container:push --app <App Name> web
-$ heroku container:release web --app <App Name>
+$ heroku create
+$ heroku container:push web
+$ heroku container:release web
 ```
 
 ## 操作方法
