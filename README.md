@@ -1,21 +1,6 @@
 # Kakugame
 
-https://kakugame.herokuapp.com
-
-## Development
-
-```
-$ python3 run.py
-```
-
-## Deployment
-
-```
-$ heroku login
-$ heroku create
-$ heroku container:push web
-$ heroku container:release web
-```
+https://hamchin.github.io/Kakugame
 
 ## 操作方法
 

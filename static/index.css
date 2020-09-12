@@ -1,28 +1,67 @@
+main {
+    width: 1400px;
+    margin: 10px 0 5px 10px;
+}
+
+canvas {
+    border: 3px solid #000000;
+    border-radius: 5px;
+}
+
 table {
     border-collapse: collapse;
 }
+
 td, th {
     border: solid 1px;
     padding: 0.5em;
 }
+
 .menu {
     width: 380px;
     display: inline-block;
     overflow: auto;
     height: 540px;
     margin-left: 10px;
-    border: 2px solid black;
+    border: 2px solid #000000;
     padding: 5px 10px;
+    border-radius: 5px;
 }
+
+.volume {
+    margin: 0 10px;
+}
+
+.volume #mute {
+    width: 100px;
+    cursor: pointer;
+}
+
+.volume #down {
+    width: 50px;
+    cursor: pointer;
+}
+
+.volume #up {
+    width: 50px;
+    cursor: pointer;
+}
+
+.font-large {
+    font-size: large;
+}
+
 ::-webkit-scrollbar {
     width: 10px;
 }
+
 ::-webkit-scrollbar-track {
-    background: #fff;
-    border-left: solid 1px #ececec;
+    background: #FFFFFF;
+    border-left: solid 1px #ECECEC;
 }
+
 ::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: #CCCCCC;
     border-radius: 10px;
-    box-shadow: inset 0 0 0 2px #fff;
+    box-shadow: inset 0 0 0 2px #FFFFFF;
 }
